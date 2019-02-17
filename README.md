@@ -16,3 +16,4 @@ To rebuild the native nesting engine
 - npm install
 - .\node_modules\.bin\electron-rebuild.cmd
 - copy contents of build/Release to minkowski/Release
+- To package app run electron-packager . deepnest --platform=win32 --arch=x64
