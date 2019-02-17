@@ -1,0 +1,3 @@
+[submodule "polygon"]
+	path = polygon
+	url = https://github.com/boostorg/polygon.git
