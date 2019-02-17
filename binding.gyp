@@ -3,8 +3,9 @@
         {
             "target_name": "addon",
             "sources": [ "addon.cc", "minkowski.cc" ],
-            'cflags!': [ '-fno-exceptions' ],
-      'cflags_cc!': [ '-fno-exceptions' ],
+            'cflags!': [ '-fno-exceptions', "-m64" ],
+            "ldflags": [ "-m elf_i386" ],
+      'cflags_cc!': [ '-fno-exceptions', '-fPIC -m64' ],
       'conditions': [
         ['OS=="mac"', {
           'xcode_settings': {
@@ -14,7 +15,7 @@
       ],
             "include_dirs" : [
  	 		"<!(node -e \"require('nan')\")",
-            "/Users/jackqiao/boost_1_62_0/"
+            ".\polygon\include"
 		]
         }
     ],

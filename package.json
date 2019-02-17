@@ -7,9 +7,10 @@
     "start": "electron .",
     "configure": "node-gyp configure --release",
     "build": "node-gyp rebuild --target=1.4.8 --arch=x64 --dist-url=https://atom.io/download/atom-shell",
-    "clean": "node-gyp clean configure build --verbose --target=1.4.8 --arch=ia32 --dist-url=https://atom.io/download/atom-shell",
+    "clean": "node-gyp clean configure build --verbose --target=1.4.8 --arch=x64 --dist-url=https://atom.io/download/atom-shell",
     "pack": "build --dir",
-    "dist": "build"
+    "dist": "build",
+    "postinstall": "electron-builder install-app-deps"
   },
   "repository": "https://github.com/Jack000",
   "keywords": [
@@ -26,7 +27,7 @@
   "devDependencies": {
     "electron": "^1.4.1",
     "electron-builder": "^20.26.0",
-    "electron-rebuild": "^1.4.0"
+    "electron-rebuild": "^1.8.4"
   },
   "dependencies": {
     "electron-config": "^0.2.1",
