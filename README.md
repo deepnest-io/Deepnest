@@ -10,3 +10,9 @@ Deepnest is a desktop application based on [SVGNest](https://github.com/Jack000/
 - merges common lines for laser cuts
 - support for DXF files (via conversion)
 - new path approximation feature for highly complex parts
+
+To rebuild the native nesting engine
+- npm install --save-dev electron-rebuild
+- npm install
+- .\node_modules\.bin\electron-rebuild.cmd
+- copy contents of build/Release to minkowski/Release
