@@ -2,6 +2,7 @@
 #include "minkowski.h"
 
 #include <iostream>
+#define BOOST_POLYGON_NO_DEPS
 #include <boost/polygon/polygon.hpp>
 #include <string>
 #include <iostream>
