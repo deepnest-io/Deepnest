@@ -73,6 +73,8 @@
 			for(var i=0; i<parts.length; i++){
 				this.parts.push(parts[i]);
 			}
+
+			return parts;
 			
 			// test simplification
 			/*for(i=0; i<parts.length; i++){

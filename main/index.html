@@ -752,8 +752,10 @@
 				rect.setAttribute('y',0);
 				rect.setAttribute('width',width.value*conversion);
 				rect.setAttribute('height',height.value*conversion);
+				rect.setAttribute('class', 'sheet');
 				svg.appendChild(rect);
-				DeepNest.importsvg(null, null, (new XMLSerializer()).serializeToString(svg));
+				const sheet = DeepNest.importsvg(null, null, (new XMLSerializer()).serializeToString(svg))[0];
+				sheet.sheet = true;
 				
 				width.className = '';
 				height.className = '';
