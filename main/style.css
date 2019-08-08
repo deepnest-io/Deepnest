@@ -231,8 +231,8 @@ background-position: 50%;
 padding: 0.6em 2em;
 }
 
-.button.addrectangle{
-background-image: url(img/add_rectangle.svg);
+.button.addsheet{
+background-image: url(img/add_sheet.svg);
 background-repeat: no-repeat;
 background-size: 1.5em 1.5em;
 background-position: 50%;
@@ -687,11 +687,11 @@ transition: height 0.5s;
 height: 17em;
 }
 
-#partstools #rectangle{
+#partstools #sheet{
 display: none;
 }
 
-#partstools.active #rectangle{
+#partstools.active #sheet{
 display: block;
 }
 
@@ -699,34 +699,34 @@ display: block;
 margin-bottom: 2em;
 }
 
-#rectangledialog{
+#sheetdialog{
 float: left;
 clear: both;
 margin: 0 1.5em 1.5em 1.5em;
 }
 
-#rectangledialog .button.add{
+#sheetdialog .button.add{
 margin-left: 0;
 }
 
-#rectangledialog .row{
+#sheetdialog .row{
 float: left;
 width: 100%;
 margin: 0.3em 0 0 0;
 }
 
-#rectangledialog .label{
+#sheetdialog .label{
 display: inline-block;
 width: 7em;
 }
 
-#rectangledialog .button{
+#sheetdialog .button{
 padding-left: 2em;
 padding-right: 2em;
 margin-top: 1em;
 }
 
-#rectangledialog input{
+#sheetdialog input{
 width: 5em;
 height: 2em;
 line-height: 2em;
@@ -738,7 +738,7 @@ color: #7B879E;
 margin: 0 0.2em;
 }
 
-#rectangledialog input:out-of-range, #rectangledialog input.error {
+#sheetdialog input:out-of-range, #sheetdialog input.error {
     border-color:hsl(0, 50%, 50%);
     background:hsl(0, 50%, 90%);
 }

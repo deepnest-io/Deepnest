@@ -712,21 +712,21 @@
 				return false;
 			};
 			
-			// add rectangle
-			document.querySelector('#addrectangle').onclick = function(){
+			// add sheet
+			document.querySelector('#addsheet').onclick = function(){
 				var tools = document.querySelector('#partstools');
-				var dialog = document.querySelector('#rectangledialog');
+				var dialog = document.querySelector('#sheetdialog');
 				
 				tools.className = 'active';
 			};
 			
-			document.querySelector('#cancelrectangle').onclick = function(){
+			document.querySelector('#cancelsheet').onclick = function(){
 				document.querySelector('#partstools').className = '';
 			};
 			
-			document.querySelector('#confirmrectangle').onclick = function(){
-				var width = document.querySelector('#rectanglewidth');
-				var height = document.querySelector('#rectangleheight');
+			document.querySelector('#confirmsheet').onclick = function(){
+				var width = document.querySelector('#sheetwidth');
+				var height = document.querySelector('#sheetheight');
 				
 				if(Number(width.value) <= 0){
 					width.className = 'error';
@@ -1655,17 +1655,17 @@
 					</div>
 					
 					<div id="partstools">
-						<a href="#" class="button addrectangle" id="addrectangle">&nbsp;</a>
+						<a href="#" class="button addsheet" id="addsheet">&nbsp;</a>
 						<a href="#" class='button delete {{ getSelected().length == 0 ? "disabled" : "" }}' on-click="delete">&nbsp;</a>
 						<a href="#" class="button {{ parts.length == 0 ? "disabled" : "" }}" id="selectall" on-click="selectall">{{ getSelected().length == parts.length ? 'Deselect' : 'Select' }} all</a>
 						
-						<div id="rectangledialog">
-						<h2>Add Rectangle</h2>
-						<span class="row"><span class="label">width</span> <input type="number" min="0" id="rectanglewidth" required /> {{ getUnits }}</span>
-						<span class="row"><span class="label">height</span> <input type="number" min="0" id="rectangleheight" required /> {{ getUnits }}</span>
+						<div id="sheetdialog">
+						<h2>Add Sheet</h2>
+						<span class="row"><span class="label">width</span> <input type="number" min="0" id="sheetwidth" required /> {{ getUnits }}</span>
+						<span class="row"><span class="label">height</span> <input type="number" min="0" id="sheetheight" required /> {{ getUnits }}</span>
 						
-						<a href="#" class="button add" id="confirmrectangle">Add</a>
-						<a href="#" class="button" id="cancelrectangle">Cancel</a>
+						<a href="#" class="button add" id="confirmsheet">Add</a>
+						<a href="#" class="button" id="cancelsheet">Cancel</a>
 						</div>
 					</div>
 				</div>
