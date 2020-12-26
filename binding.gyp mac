@@ -1,21 +1,28 @@
 {
-    "targets": [
-        {
-            "target_name": "addon",
-            "sources": [ "addon.cc", "minkowski.cc" ],
-            'cflags!': [ '-fno-exceptions' ],
-      'cflags_cc!': [ '-fno-exceptions' ],
-      'conditions': [
-        ['OS=="mac"', {
-          'xcode_settings': {
-            'GCC_ENABLE_CPP_EXCEPTIONS': 'YES'
-          }
-        }]
+  "targets": [
+    {
+      "target_name": "addon",
+      "sources": [
+        "addon.cc",
+        "minkowski.cc"
       ],
-            "include_dirs" : [
- 	 		"<!(node -e \"require('nan')\")",
-            "/Users/jackqiao/boost_1_62_0/"
-		]
-        }
-    ],
+      "cflags!": [ "-fno-exceptions" ],
+      "cflags_cc!": [ "-fno-exceptions" ],
+      "conditions": [
+        [
+          "OS==\"mac\"",
+          {
+            "xcode_settings": {
+              "GCC_ENABLE_CPP_EXCEPTIONS": "YES",
+              "MACOSX_DEPLOYMENT_TARGET": "10.9"
+            }
+          }
+        ]
+      ],
+      "include_dirs": [
+        "<!(node -e \"require('nan')\")",
+        "/Users/user/Documents/development/foss/boost_1_75_0/"
+      ]
+    }
+  ]
 }
