@@ -257,6 +257,8 @@ window.onload = function () {
 				c++;
 			}
 			console.log('nfp cached:', c);
+			console.log()
+            ipcRenderer.send('test', [data.sheets, parts, data.config, index]);
 		  	var placement = placeParts(data.sheets, parts, data.config, index);
 	
 			placement.index = data.index;
@@ -1168,6 +1170,8 @@ function placeParts(sheets, parts, config, nestindex){
 	}
 	// send finish progerss signal
 	ipcRenderer.send('background-progress', {index: nestindex, progress: -1});
+
+	console.log('WATCH', allplacements);
 	
 	return {placements: allplacements, fitness: fitness, area: sheetarea, mergedLength: totalMerged };
 }

@@ -32,7 +32,7 @@
 			}
 		}
 		
-		const { ipcRenderer } = require('electron');
+		const { ipcRenderer, remote } = require('electron');
 		const fs = require('graceful-fs');
 		const request = require('request');
 		const http = require('http');
@@ -444,7 +444,7 @@
 				
 				DeepNest.imports.forEach(function(i){
 					i.selected = false;
-				});				
+				});
 				
 				im.selected = true;
 				ractive.update('imports');
@@ -550,7 +550,14 @@
 			var electron = require('electron');
 			var app = electron.remote; 
 			var fs = require('fs');
-			
+
+			var files = fs.readdirSync(remote.getGlobal('process').env.SAVE_PLACEMENTS_PATH);
+			var svgs = files.map(file => file.includes('.svg') ? file : undefined).filter(file => file !== undefined).sort();
+
+			svgs.forEach(function(file) {
+				processFile(remote.getGlobal('process').env.SAVE_PLACEMENTS_PATH + file);
+			});
+
 			var importbutton = document.querySelector('#import');
 			importbutton.onclick = function(){
 				if(importbutton.className == 'button import disabled' || importbutton.className == 'button import spinner'){
@@ -655,7 +662,11 @@
 				window.DeepNest.importsvg(filename, dirpath, data, scalingFactor, dxfFlag);
 
 				DeepNest.imports.forEach(function(im){
-				im.selected = false;
+				if (filename === 'background.svg') {
+				  im.selected = true;
+				} else {
+				  im.selected = false;
+				}
 				});
 
 				DeepNest.imports[DeepNest.imports.length-1].selected = true;
@@ -887,6 +898,7 @@
 				
 				
 				for(var i=0; i<DeepNest.parts.length; i++){
+					console.log(DeepNest.parts);
 					if(DeepNest.parts[i].sheet){
 						// need at least one sheet
 						document.querySelector('#main').className = '';
@@ -933,6 +945,15 @@
 			
 			var stop = document.querySelector('#stopnest');
 			stop.onclick = function(e){
+				var exportedPlacements = remote.getGlobal("exportedPlacements");
+				var filePath = remote.getGlobal('process').env.SAVE_PLACEMENTS_PATH + 'exports.json'
+				var fileData = JSON.stringify(exportedPlacements)
+				fs.writeFile(filePath, fileData)
+
+				console.log('\n\n\n')
+				console.log(remote.getGlobal("test"));
+				console.log('\n\n\n')
+
 				if(stop.className == 'button stop'){
 					ipcRenderer.send('background-stop');
 					DeepNest.stop();

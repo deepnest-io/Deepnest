@@ -131,6 +131,7 @@ window.onload = function () {
 	    var placement = placeParts(data.sheets, parts, data.config, index);
 	    
 	    placement.index = data.index;
+	    console.log('WATCH', placement)
 	    
 		ipcRenderer.send('background-response', placement);
 		console.timeEnd('Total');

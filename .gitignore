@@ -1,0 +1,7 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+.DS_Store
+/node_modules
+/build
+package-lock.json

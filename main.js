@@ -217,3 +217,11 @@ ipcMain.on('login-success', function(event, payload){
 ipcMain.on('purchase-success', function(event){
 	mainWindow.webContents.send('purchase-success');
 });
+
+ipcMain.on("setPlacements", (event, payload) => {
+  global.exportedPlacements = payload;
+} );
+
+ipcMain.on("test", (event, payload) => {
+  global.test = payload;
+} );

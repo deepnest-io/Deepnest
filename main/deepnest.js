@@ -1018,6 +1018,7 @@
 		}
 		
 		ipcRenderer.on('background-response', (event, payload) => {
+		    ipcRenderer.send("setPlacements", payload);
 			console.log('ipc response',payload);
 			if(!GA){
 				// user might have quit while we're away
