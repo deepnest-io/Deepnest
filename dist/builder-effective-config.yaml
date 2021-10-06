@@ -1,0 +1,13 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.deepnest.io
+copyright: Copyright 2016 Jack Qiao
+compression: maximum
+nodeGypRebuild: false
+mac:
+  category: public.app-category.utilities
+  icon: icon.icns
+win:
+  icon: icon.ico
+electronVersion: 1.8.8

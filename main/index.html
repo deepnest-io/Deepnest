@@ -551,11 +551,11 @@
 			var app = electron.remote; 
 			var fs = require('fs');
 
-			var files = fs.readdirSync(remote.getGlobal('process').env.SAVE_PLACEMENTS_PATH);
+			var files = fs.readdirSync(remote.getGlobal('NEST_DIRECTORY'));
 			var svgs = files.map(file => file.includes('.svg') ? file : undefined).filter(file => file !== undefined).sort();
 
 			svgs.forEach(function(file) {
-				processFile(remote.getGlobal('process').env.SAVE_PLACEMENTS_PATH + file);
+				processFile(remote.getGlobal('NEST_DIRECTORY') + file);
 			});
 
 			var importbutton = document.querySelector('#import');
@@ -662,11 +662,7 @@
 				window.DeepNest.importsvg(filename, dirpath, data, scalingFactor, dxfFlag);
 
 				DeepNest.imports.forEach(function(im){
-				if (filename === 'background.svg') {
-				  im.selected = true;
-				} else {
-				  im.selected = false;
-				}
+					im.selected = false;
 				});
 
 				DeepNest.imports[DeepNest.imports.length-1].selected = true;
@@ -946,7 +942,7 @@
 			var stop = document.querySelector('#stopnest');
 			stop.onclick = function(e){
 				var exportedPlacements = remote.getGlobal("exportedPlacements");
-				var filePath = remote.getGlobal('process').env.SAVE_PLACEMENTS_PATH + 'exports.json'
+				var filePath = remote.getGlobal('NEST_DIRECTORY') + 'exports.json'
 				var fileData = JSON.stringify(exportedPlacements)
 				fs.writeFile(filePath, fileData)
 
