@@ -165,6 +165,22 @@
 				return false;
 			}
 			
+
+      function saveJSON() {
+          var filePath = remote.getGlobal("NEST_DIRECTORY") + "exports.json";
+
+          var selected = DeepNest.nests.filter(function (n) {
+            return n.selected;
+          });
+
+          if (selected.length == 0) {
+            return false;
+          }
+
+          var fileData = JSON.stringify(selected.pop());
+          fs.writeFileSync(filePath, fileData);
+        }
+			
 			function updateForm(c){
 				var unitinput 
 				if(c.units == 'inch'){
@@ -551,11 +567,11 @@
 			var app = electron.remote; 
 			var fs = require('fs');
 
-			var files = fs.readdirSync(remote.getGlobal('process').env.SAVE_PLACEMENTS_PATH);
+			var files = fs.readdirSync(remote.getGlobal('NEST_DIRECTORY'));
 			var svgs = files.map(file => file.includes('.svg') ? file : undefined).filter(file => file !== undefined).sort();
 
 			svgs.forEach(function(file) {
-				processFile(remote.getGlobal('process').env.SAVE_PLACEMENTS_PATH + file);
+				processFile(remote.getGlobal('NEST_DIRECTORY') + file);
 			});
 
 			var importbutton = document.querySelector('#import');
@@ -662,11 +678,7 @@
 				window.DeepNest.importsvg(filename, dirpath, data, scalingFactor, dxfFlag);
 
 				DeepNest.imports.forEach(function(im){
-				if (filename === 'background.svg') {
-				  im.selected = true;
-				} else {
-				  im.selected = false;
-				}
+					im.selected = false;
 				});
 
 				DeepNest.imports[DeepNest.imports.length-1].selected = true;
@@ -945,15 +957,6 @@
 			
 			var stop = document.querySelector('#stopnest');
 			stop.onclick = function(e){
-				var exportedPlacements = remote.getGlobal("exportedPlacements");
-				var filePath = remote.getGlobal('process').env.SAVE_PLACEMENTS_PATH + 'exports.json'
-				var fileData = JSON.stringify(exportedPlacements)
-				fs.writeFile(filePath, fileData)
-
-				console.log('\n\n\n')
-				console.log(remote.getGlobal("test"));
-				console.log('\n\n\n')
-
 				if(stop.className == 'button stop'){
 					ipcRenderer.send('background-stop');
 					DeepNest.stop();
@@ -962,6 +965,9 @@
 						p.className = 'progress';
 					});
 					stop.className = 'button stop disabled';
+
+          saveJSON();
+
 					setTimeout(function(){
 						stop.className = 'button start';
 						stop.innerHTML = 'Start nest';
@@ -1009,6 +1015,9 @@
 			
 			var exportbutton = document.querySelector('#export');
 			
+      var exportjson = document.querySelector('#exportjson');
+      exportjson.onclick = saveJSON();
+
 			var exportsvg = document.querySelector('#exportsvg');
 			exportsvg.onclick = function(){
 				
@@ -1580,6 +1589,7 @@
 			<span id="export_wrapper">
 			<li class="button export disabled" id="export">Export</li>
 			<ul class="dropdown">
+				<li id="exportjson">JSON file</li>
 				<li id="exportsvg">SVG file</li>
 				<li id="exportdxf">DXF file</li>
 				<!--<li id="exportgcode">GCode file</li>-->

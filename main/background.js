@@ -118,11 +118,13 @@ window.onload = function () {
 		var ids = data.ids;
 		var sources = data.sources;
 		var children = data.children;
+		var filenames = data.filenames;
 		
 		for(var i=0; i<parts.length; i++){
 			parts[i].rotation = rotations[i];
 			parts[i].id = ids[i];
 			parts[i].source = sources[i];
+			parts[i].filename = filenames[i];
 			if(!data.config.simplify){
 				parts[i].children = children[i];
 			}
@@ -824,6 +826,7 @@ function placeParts(sheets, parts, config, nestindex){
 		r.rotation = parts[i].rotation;
 		r.source = parts[i].source;
 		r.id = parts[i].id;
+		r.filename = parts[i].filename;
 		
 		rotated.push(r);
 	}
@@ -870,6 +873,7 @@ function placeParts(sheets, parts, config, nestindex){
 				r.rotation = part.rotation + (360/config.rotations);
 				r.source = part.source;
 				r.id = part.id;
+				r.filename = part.filename
 				
 				// rotation is not in-place
 				part = r;
@@ -896,7 +900,8 @@ function placeParts(sheets, parts, config, nestindex){
 								y: sheetNfp[j][k].y-part[0].y,
 								id: part.id,
 								rotation: part.rotation,
-								source: part.source
+								source: part.source,
+								filename: part.filename
 							}
 						}
 					}
@@ -1033,7 +1038,8 @@ function placeParts(sheets, parts, config, nestindex){
 						y: nf[k].y-part[0].y,
 						id: part.id,
 						source: part.source,
-						rotation: part.rotation
+						rotation: part.rotation,
+						filename: part.filename
 					};
 					
 					

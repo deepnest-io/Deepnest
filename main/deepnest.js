@@ -69,7 +69,7 @@
 				});
 			}
 			
-			var parts = this.getParts(svg.children);
+			var parts = this.getParts(svg.children, filename);
 			for(var i=0; i<parts.length; i++){
 				this.parts.push(parts[i]);
 			}
@@ -641,8 +641,8 @@
 		
 		// assuming no intersections, return a tree where odd leaves are parts and even ones are holes
 		// might be easier to use the DOM, but paths can't have paths as children. So we'll just make our own tree.
-		this.getParts = function(paths){
-			
+		this.getParts = function(paths, filename){
+
 			var i, j;
 			var polygons = [];
 			
@@ -770,6 +770,9 @@
 				part.bounds = bounds;
 				part.area = bounds.width*bounds.height;
 				part.quantity = 1;
+				part.filename = filename;
+				
+			  if (part.filename === 'BACKGROUND.svg') { part.sheet = true }
 				
 				// load root element
 				part.svgelements.push(svgelements[part.polygontree.source]);
@@ -957,7 +960,8 @@
 				parts.push({
 					quantity: this.parts[i].quantity,
 					sheet: this.parts[i].sheet,
-					polygontree: this.cloneTree(this.parts[i].polygontree)
+					polygontree: this.cloneTree(this.parts[i].polygontree),
+					filename: this.parts[i].filename
 				});
 			}
 			
@@ -1115,6 +1119,7 @@
 			var sheetsources = [];
 			var sheetchildren = [];
 			var sid = 0;
+			var filenames = [];
 			for(i=0; i<parts.length; i++){
 				if(parts[i].sheet){
 					var poly = parts[i].polygontree;
@@ -1126,6 +1131,7 @@
 						sid++;
 					}
 				}
+				filenames.push(parts[i].filename);
 			}
 			
 			
@@ -1149,7 +1155,7 @@
 						children[j] = child;
 					}
 					
-					ipcRenderer.send('background-start', {index: i, sheets: sheets, sheetids: sheetids, sheetsources: sheetsources, sheetchildren: sheetchildren, individual: GA.population[i], config: config, ids: ids, sources: sources, children: children});
+					ipcRenderer.send('background-start', {index: i, sheets: sheets, sheetids: sheetids, sheetsources: sheetsources, sheetchildren: sheetchildren, individual: GA.population[i], config: config, ids: ids, sources: sources, children: children, filenames: filenames});
 					running++;					
 				}
 			}
