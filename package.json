@@ -10,7 +10,13 @@
     "clean": "SAVE_PLACEMENTS_PATH=/Users/Dogthemachine/media/result_contour/ node-gyp clean configure build --verbose --target=1.4.8 --arch=x64 --dist-url=https://atom.io/download/atom-shell",
     "pack": "SAVE_PLACEMENTS_PATH=/Users/Dogthemachine/media/result_contour/ build --dir",
     "dist": "SAVE_PLACEMENTS_PATH=/Users/Dogthemachine/media/result_contour/ build",
-    "postinstall": "SAVE_PLACEMENTS_PATH=/Users/Dogthemachine/media/result_contour/ electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "w:start": "electron .",
+    "w:configure": "node-gyp configure --release",
+    "w:build": "node-gyp rebuild --target=1.4.8 --arch=x64 --dist-url=https://atom.io/download/atom-shell",
+    "w:clean": "node-gyp clean configure build --verbose --target=1.4.8 --arch=x64 --dist-url=https://atom.io/download/atom-shell",
+    "w:pack": "build --dir",
+    "w:dist": "build"
   },
   "repository": "https://github.com/Jack000",
   "keywords": [
@@ -27,7 +33,7 @@
   "devDependencies": {
     "electron": "^1.4.1",
     "electron-builder": "^20.26.0",
-    "electron-rebuild": "^1.8.4"
+    "electron-rebuild": "^1.11.0"
   },
   "dependencies": {
     "electron-config": "^0.2.1",

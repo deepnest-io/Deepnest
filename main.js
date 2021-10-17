@@ -80,7 +80,7 @@ function createMainWindow() {
   var frameless = process.platform == 'darwin';
   //var frameless = true;
   
-  mainWindow = new BrowserWindow({width: Math.ceil(width*0.9), height: Math.ceil(height*0.9), frame: !frameless, show: false})
+  mainWindow = new BrowserWindow({width: Math.ceil(width*0.9), height: Math.ceil(height*0.9), frame: !frameless, show: false});
 
   // and load the index.html of the app.
   mainWindow.loadURL(url.format({
@@ -100,7 +100,13 @@ function createMainWindow() {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     mainWindow = null
-  }) 
+  })
+
+  if (process.env.SAVE_PLACEMENTS_PATH !== undefined) {
+    global.NEST_DIRECTORY = process.env.SAVE_PLACEMENTS_PATH;
+  } else {
+    global.NEST_DIRECTORY = 'C:\\nest\\'
+  }
 }
 
 let winCount = 0;
