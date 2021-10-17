@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="413621dd-5cad-46c4-a239-54832a87f2be" name="Default Changelist" comment="">
+    <list default="true" id="e9fa8a07-e948-4114-92c2-c5c12de37de7" name="Changes" comment="Final build">
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/background.js" beforeDir="false" afterPath="$PROJECT_DIR$/main/background.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/deepnest.js" beforeDir="false" afterPath="$PROJECT_DIR$/main/deepnest.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/main/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/win-unpacked/resources/app.asar" beforeDir="false" afterPath="$PROJECT_DIR$/dist/win-unpacked/resources/app.asar" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -15,7 +17,15 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectId" id="1zckKIwVSPxYgn8DIc2hAqOAlbj" />
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
+  </component>
+  <component name="ProjectId" id="1yoTsHkDP2rwZLPxUhwuqCw3rNl" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -24,17 +34,48 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/minkowski" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\projects\Deepnest\minkowski" />
+      <recent name="C:\projects\Deepnest\minkowski\win" />
+      <recent name="C:\projects\Deepnest" />
+    </key>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="413621dd-5cad-46c4-a239-54832a87f2be" name="Default Changelist" comment="" />
-      <created>1634454697885</created>
+      <changelist id="e9fa8a07-e948-4114-92c2-c5c12de37de7" name="Changes" comment="" />
+      <created>1632917146573</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1634454697885</updated>
+      <updated>1632917146573</updated>
     </task>
+    <task id="LOCAL-00001" summary="Final build">
+      <created>1634485647674</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1634485647674</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Final build" />
+    <option name="LAST_COMMIT_MESSAGE" value="Final build" />
   </component>
 </project>
