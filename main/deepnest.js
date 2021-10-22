@@ -1078,6 +1078,7 @@
 							var poly = this.cloneTree(parts[i].polygontree); // deep copy
 							poly.id = id; // id is the unique id of all parts that will be nested, including cloned duplicates
 							poly.source = i; // source is the id of each unique part from the main part list
+              poly.filename = parts[i].filename;
 							
 							adam.push(poly);
 							id++;
@@ -1119,7 +1120,7 @@
 			var sheetsources = [];
 			var sheetchildren = [];
 			var sid = 0;
-			var filenames = [];
+
 			for(i=0; i<parts.length; i++){
 				if(parts[i].sheet){
 					var poly = parts[i].polygontree;
@@ -1131,7 +1132,6 @@
 						sid++;
 					}
 				}
-				filenames.push(parts[i].filename);
 			}
 			
 			
@@ -1145,14 +1145,17 @@
 					var ids = [];
 					var sources = [];
 					var children = [];
+          var filenames = [];
 					
 					for(j=0; j<GA.population[i].placement.length; j++){
 						var id = GA.population[i].placement[j].id;
 						var source = GA.population[i].placement[j].source;
 						var child = GA.population[i].placement[j].children;
-						ids[j] = id;
+            var filename = GA.population[i].placement[j].filename;
+            ids[j] = id;
 						sources[j] = source;
 						children[j] = child;
+            filenames[j] = filename;
 					}
 					
 					ipcRenderer.send('background-start', {index: i, sheets: sheets, sheetids: sheetids, sheetsources: sheetsources, sheetchildren: sheetchildren, individual: GA.population[i], config: config, ids: ids, sources: sources, children: children, filenames: filenames});

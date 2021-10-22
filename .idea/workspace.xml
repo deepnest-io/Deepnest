@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e9fa8a07-e948-4114-92c2-c5c12de37de7" name="Changes" comment="Final build">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+    <list default="true" id="e9fa8a07-e948-4114-92c2-c5c12de37de7" name="Changes" comment="Buildfiles build">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dist/win-unpacked/resources/app.asar" beforeDir="false" afterPath="$PROJECT_DIR$/dist/win-unpacked/resources/app.asar" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,7 +57,14 @@
       <option name="project" value="LOCAL" />
       <updated>1634485647674</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Buildfiles build">
+      <created>1634485741487</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1634485741487</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -76,6 +81,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Final build" />
-    <option name="LAST_COMMIT_MESSAGE" value="Final build" />
+    <MESSAGE value="Buildfiles build" />
+    <option name="LAST_COMMIT_MESSAGE" value="Buildfiles build" />
   </component>
 </project>
