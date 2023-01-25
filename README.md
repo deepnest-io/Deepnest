@@ -23,17 +23,26 @@ old packages.  You must pay close attention to the [prerequisites](#prerequisite
 
 ### Prerequisites
 
+- You must have Visual Studio with C++ extensions installed.  
 - Clone this fork with: `git clone --recurse-submodules --remote-submodules
   https://github.com/cmidgley/Deepnest`
 - Download [Boost 1.62.0](https://sourceforge.net/projects/boost/files/boost/1.62.0/) and install it
  in `C:\local\boost_1_62_0`.  Verify that it is copied correctly by checking that the directory
  `C:\local\boost_1_62_0\boost` exists.
-- Use [Node.js](https://nodejs.org) version 8 or 10 (12+ fails due to node-gyp).  Recommend using the Node version manager
+- Use [Node.js](https://nodejs.org) version 8 (10 generates lots of warnings, and 12+ fails due to node-gyp).  Recommend using the Node version manager.
   [nvm-windows](https://github.com/coreybutler/nvm-windows/releases) to download Node and change
   versions.
 - Ensure you are on Python 2.7 (Python 3 does not work).  Recommend using Python version manager
   [pyenv-win](https://github.com/pyenv-win/pyenv-win) to download and change versions.  Make sure to
-  close all command shells (including VSCode) after doing this, to get the latest environment variables.
+  close all command shells (including VSCode) after doing this, to get the latest environment
+  variables.  Check with `python --version`.
+  - NOTE: If you are running Windows 10 1905 or newer, you might need to disable the built-in Python
+  launcher via Start > "Manage App Execution Aliases" and turning off the "App Installer" aliases
+  for Python"
+- `node-gyp` (the Node to C++ binding environment) requires Visual Studio with C++ extensions.  See
+  [this
+  page](https://nodejs.github.io/node-addon-examples/getting-started/tools/#:~:text=It%20is%20not%20necessary%20to,that%20has%20everything%20you%20need.) for a simple to install package that may work (not tested, as my system already has it already
+  installed).
 
 ### Building
 
