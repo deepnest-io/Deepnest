@@ -20,7 +20,8 @@ again (only Windows has been updated).
 
 No attempts have been made to upgrade to the latest versions, and as such this software depends on
 old packages.  You must pay close attention to the [prerequisites](#prerequisites) to get a
-successful build.
+successful build.  The only "change" was to clone the `plus.svg` file into `add_sheet.svg` so a
+reasonable add-sheet icon appears in the UI.
 
 ## Support, issues and pull requests
 
@@ -53,6 +54,8 @@ Good luck!
   [this
   page](https://nodejs.github.io/node-addon-examples/getting-started/tools/#:~:text=It%20is%20not%20necessary%20to,that%20has%20everything%20you%20need.) for a simple to install package that may work (not tested, as my system already has it already
   installed).
+- Create an empty directory `C:\nest`.  I've not spent the time to figure out why this is required,
+  but it appears to be so.
 
 ### Building
 
@@ -75,3 +78,7 @@ To build a distribution set of files, run:
 The resulting files will be located in `.\deepnest-win32-x64`.  All files need to be distributed,
 meaning a ZIP file or writing a simple installer would be needed to avoid handling a larger number
 of files.
+
+## Debugging hint
+
+In `main.js`, uncomment the two lines with `openDevTools` and the browser debugger pane will appear.
