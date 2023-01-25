@@ -14,9 +14,9 @@
     "w:start": "electron .",
     "w:configure": "node-gyp configure --release",
     "w:build": "mkdir winkowski >nul 2>&1|echo.>nul && .\\node_modules\\.bin\\electron-rebuild.cmd && npm run w:copy",
-    "w:clean": "rmdir /s /q build dist node_modules >nul 2>&1|echo.>nul",
-    "w:pack": "build --dir",
-    "w:dist": "build",
+    "w:clean": "rmdir /s /q build dist >nul 2>&1|echo.>nul",
+    "w:fullclean": "rmdir /s /q build dist node_modules >nul 2>&1|echo.>nul",
+    "w:dist": ".\\node_modules\\.bin\\electron-packager . deepnest --platform=win32 --arch=x64",
     "w:copy": "xcopy /s /y .\\build\\Release .\\minkowski\\Release"
   },
   "repository": "https://github.com/Jack000",
@@ -34,6 +34,7 @@
   "devDependencies": {
     "electron": "^1.4.1",
     "electron-builder": "^20.44.4",
+    "electron-packager": "^17.1.1",
     "electron-rebuild": "^1.11.0"
   },
   "dependencies": {

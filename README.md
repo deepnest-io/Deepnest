@@ -18,6 +18,9 @@ This is a fork of [Dogthemachine's fork](https://github.com/Dogthemachine/Deepne
 Deepnest](https://github.com/Jack000/Deepnest), with changes made to the make it able to be built
 again (only Windows has been updated).
 
+No attempts have been made to upgrade to the latest versions, and as such this software depends on
+old packages.  You must pay close attention to the [prerequisites](#prerequisites) to get a successful build.
+
 ### Prerequisites
 
 - Clone this fork with: `git clone --recurse-submodules --remote-submodules
@@ -25,7 +28,7 @@ again (only Windows has been updated).
 - Download [Boost 1.62.0](https://sourceforge.net/projects/boost/files/boost/1.62.0/) and install it
  in `C:\local\boost_1_62_0`.  Verify that it is copied correctly by checking that the directory
  `C:\local\boost_1_62_0\boost` exists.
-- Use [Node.js](https://nodejs.org) version 8.17.0.  Recommend using the Node version manager
+- Use [Node.js](https://nodejs.org) version 8 or 10 (12+ fails due to node-gyp).  Recommend using the Node version manager
   [nvm-windows](https://github.com/coreybutler/nvm-windows/releases) to download Node and change
   versions.
 - Ensure you are on Python 2.7 (Python 3 does not work).  Recommend using Python version manager
@@ -38,10 +41,11 @@ again (only Windows has been updated).
 - `npm run w:build`
 - `npm run w:start`
 
-## Clean build
+## Clean builds
 
-Before building, issue `npm w:clean` to remove all artifacts, including `node_modules`.  Then run
-the steps from [Building](#building).
+Two clean options:
+- For regular clean of build artifacts, use `npm run w:clean` and then `npm run w:build`.
+- To remove everything, including `node_modules` use `npm run w:fullclean`, then [build](#building) again.
 
 
-- To package app run .\node_modules\.bin\electron-packager . deepnest --platform=win32 --arch=x64
+- To package app run s
