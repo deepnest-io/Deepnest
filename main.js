@@ -92,7 +92,7 @@ function createMainWindow() {
   mainWindow.setMenu(null);
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools()
+  // mainWindow.webContents.openDevTools()
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
@@ -119,7 +119,7 @@ function createBackgroundWindows() {
 			show: false
 		});
 		
-		back.webContents.openDevTools();
+		// back.webContents.openDevTools();
 		
 		back.loadURL(url.format({
 			pathname: path.join(__dirname, './main/background.html'),
