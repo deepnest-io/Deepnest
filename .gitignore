@@ -4,6 +4,8 @@
 .DS_Store
 /node_modules
 /build
+/dist
+/minkowski
 package-lock.json
 git_token.rtf
 .idea
