@@ -5,6 +5,7 @@
 /node_modules
 /build
 /dist
+/bin
 /minkowski
 package-lock.json
 git_token.rtf
