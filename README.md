@@ -56,5 +56,12 @@ Two clean options:
 - For regular clean of build artifacts, use `npm run w:clean` and then `npm run w:build`.
 - To remove everything, including `node_modules` use `npm run w:fullclean`, then [build](#building) again.
 
+## Create a distribution build
 
-- To package app run s
+To build a distribution set of files, run:
+
+- `npm run w:dist`
+
+The resulting files will be located in `.\deepnest-win32-x64`.  All files need to be distributed,
+meaning a ZIP file or writing a simple installer would be needed to avoid handling a larger number
+of files.
