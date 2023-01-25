@@ -1,5 +1,5 @@
 {
-  "name": "Deepnest.io",
+  "name": "deepnest",
   "version": "1.0.5db",
   "description": "Deep nesting for Laser and CNC",
   "main": "main.js",
@@ -13,10 +13,11 @@
     "postinstall": "electron-builder install-app-deps",
     "w:start": "electron .",
     "w:configure": "node-gyp configure --release",
-    "w:build": "node-gyp rebuild --target=1.4.8 --arch=x64 --dist-url=https://atom.io/download/atom-shell",
-    "w:clean": "node-gyp clean configure build --verbose --target=1.4.8 --arch=x64 --dist-url=https://atom.io/download/atom-shell",
+    "w:build": ".\\node_modules\\.bin\\electron-rebuild.cmd && npm run w:copy",
+    "w:clean": "rmdir /s /q build dist node_modules >nul 2>&1|echo.>nul",
     "w:pack": "build --dir",
-    "w:dist": "build"
+    "w:dist": "build",
+    "w:copy": "xcopy /s /y .\\build\\Release .\\minkowski\\Release"
   },
   "repository": "https://github.com/Jack000",
   "keywords": [
@@ -32,7 +33,7 @@
   },
   "devDependencies": {
     "electron": "^1.4.1",
-    "electron-builder": "^20.26.0",
+    "electron-builder": "^20.44.4",
     "electron-rebuild": "^1.11.0"
   },
   "dependencies": {
