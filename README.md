@@ -19,7 +19,17 @@ Deepnest](https://github.com/Jack000/Deepnest), with changes made to the make it
 again (only Windows has been updated).
 
 No attempts have been made to upgrade to the latest versions, and as such this software depends on
-old packages.  You must pay close attention to the [prerequisites](#prerequisites) to get a successful build.
+old packages.  You must pay close attention to the [prerequisites](#prerequisites) to get a
+successful build.
+
+## Support, issues and pull requests
+
+My goal has been to get Deepnest buildable again, nothing more. I'm not in a position to support
+this fork (I don't know the code and don't have the time), so do not expect any assistance on
+improvements or solving problems!  It would be wonderful if somebody (or a team) wanted
+to bring this project back to life, update it with latest dependencies and start adding features /
+fixing issues.  This fork may be a starting point, or at least perhaps provide guidance on building.
+Good luck!
 
 ### Prerequisites
 
