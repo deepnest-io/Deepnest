@@ -11,6 +11,7 @@ app.commandLine.appendSwitch('--enable-precise-memory-info');
 const BrowserWindow = electron.BrowserWindow
 
 const path = require('path')
+const os = require('os')
 const url = require('url')
 /*
 // main menu for mac
@@ -92,7 +93,8 @@ function createMainWindow() {
   mainWindow.setMenu(null);
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools()
+  if (process.env["deepnest_debug"] === '1') 
+    mainWindow.webContents.openDevTools()
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
@@ -105,8 +107,11 @@ function createMainWindow() {
   if (process.env.SAVE_PLACEMENTS_PATH !== undefined) {
     global.NEST_DIRECTORY = process.env.SAVE_PLACEMENTS_PATH;
   } else {
-    global.NEST_DIRECTORY = 'C:\\nest\\'
+    global.NEST_DIRECTORY = path.join(os.tmpdir(), "nest");
   }
+  // make sure the export directory exists
+  if (!fs.existsSync(global.NEST_DIRECTORY))
+    fs.mkdirSync(global.NEST_DIRECTORY);
 }
 
 let winCount = 0;
@@ -119,7 +124,8 @@ function createBackgroundWindows() {
 			show: false
 		});
 		
-		// back.webContents.openDevTools();
+    if (process.env["deepnest_debug"] === '1') 
+		  back.webContents.openDevTools();
 		
 		back.loadURL(url.format({
 			pathname: path.join(__dirname, './main/background.html'),
@@ -190,16 +196,26 @@ ipcMain.on('background-start', function(event, payload){
 
 ipcMain.on('background-response', function(event, payload){
 	for(var i=0; i<backgroundWindows.length; i++){
-		if(backgroundWindows[i].webContents == event.sender){
-			mainWindow.webContents.send('background-response', payload);
-			backgroundWindows[i].isBusy = false;
-			break;
-		}
+    // todo: hack to fix errors on app closing - should instead close workers when window is closed
+    try {
+      if(backgroundWindows[i].webContents == event.sender){
+        mainWindow.webContents.send('background-response', payload);
+        backgroundWindows[i].isBusy = false;
+        break;
+      }
+    } catch (ex) {
+      // ignore errors, as they can reference destroyed objects during a window close event
+    }
 	}
 });
 
 ipcMain.on('background-progress', function(event, payload){
-	mainWindow.webContents.send('background-progress', payload);
+    // todo: hack to fix errors on app closing - should instead close workers when window is closed
+    try {
+	  mainWindow.webContents.send('background-progress', payload);
+  } catch (ex) {
+    // when shutting down while processes are running, this error can occur so ignore it for now.
+  }
 });
 
 ipcMain.on('background-stop', function(event){
