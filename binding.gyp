@@ -17,8 +17,7 @@
       ],
       "include_dirs" : [
         "<!(node -e \"require('nan')\")",
-        ".\polygon\include",
-        "C:\local\\boost_1_62_0"
+        ".\polygon\include"
       ]
     }
   ],

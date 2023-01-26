@@ -37,9 +37,6 @@ Good luck!
 - You must have Visual Studio with C++ extensions installed.  
 - Clone this fork with: `git clone --recurse-submodules --remote-submodules
   https://github.com/cmidgley/Deepnest`
-- Download [Boost 1.62.0](https://sourceforge.net/projects/boost/files/boost/1.62.0/) and install it
- in `C:\local\boost_1_62_0`.  Verify that it is copied correctly by checking that the directory
- `C:\local\boost_1_62_0\boost` exists.
 - Use [Node.js](https://nodejs.org) version 8 (10 generates lots of warnings, and 12+ fails due to node-gyp).  Recommend using the Node version manager.
   [nvm-windows](https://github.com/coreybutler/nvm-windows/releases) to download Node and change
   versions.
