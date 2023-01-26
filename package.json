@@ -1,8 +1,9 @@
 {
   "name": "deepnest",
-  "version": "1.0.5db",
+  "version": "1.0.6cm",
   "description": "Deep nesting for Laser and CNC",
   "main": "main.js",
+  "license": "MIT",
   "scripts": {
     "start": "SAVE_PLACEMENTS_PATH=/Users/Dogthemachine/media/result_contour/ electron .",
     "configure": "SAVE_PLACEMENTS_PATH=/Users/Dogthemachine/media/result_contour/ node-gyp configure --release",
