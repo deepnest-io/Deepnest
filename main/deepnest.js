@@ -1,6 +1,6 @@
 /*!
  * Deepnest
- * Licensed under GPLv3
+ * Licensed under MIT
  */
  
 (function(root){
