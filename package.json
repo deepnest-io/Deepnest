@@ -13,6 +13,7 @@
     "postinstall": "electron-builder install-app-deps",
     "w:start": "electron .",
     "w:configure": "node-gyp configure --release",
+    "w:fullbuild": "node-gyp rebuild && mkdir minkowski >nul 2>&1|echo.>nul && npm run w:build",
     "w:build": "mkdir minkowski >nul 2>&1|echo.>nul && .\\node_modules\\.bin\\electron-rebuild.cmd && npm run w:copy",
     "w:clean": "rmdir /s /q build dist >nul 2>&1|echo.>nul",
     "w:fullclean": "rmdir /s /q build dist node_modules >nul 2>&1|echo.>nul",

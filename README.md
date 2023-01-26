@@ -32,7 +32,7 @@ to bring this project back to life, update it with latest dependencies and start
 fixing issues.  This fork may be a starting point, or at least perhaps provide guidance on building.
 Good luck!
 
-### Prerequisites
+## Prerequisites
 
 - You must have Visual Studio with C++ extensions installed.  
 - Clone this fork with: `git clone --recurse-submodules --remote-submodules
@@ -57,10 +57,25 @@ Good luck!
 - Create an empty directory `C:\nest`.  I've not spent the time to figure out why this is required,
   but it appears to be so.
 
-### Building
+## Building
+
+Your first build should do the following:
 
 - `npm install`
 - `npm run w:build`
+
+If you change the electron-related files (web files, javascript), a build with 
+`npm run w:build` is all that is needed.  If you change the the Minkowski files (the `.cc` or `.h` files),
+where the NFP (Non-Fit Polygon) logic and background threading is handled, you must rebuild using
+`node-gyp` to recompile the files using:
+
+- `npm run w:fullbuild`
+
+## Running
+
+Unless you want to create a [distribution build](#create-a-distribution-build) (a separate set of
+executable files that can be run without dependency on the build environment), you can run Deepnest with:
+
 - `npm run w:start`
 
 ## Clean builds
