@@ -16,7 +16,8 @@ Deepnest is a desktop application based on [SVGNest](https://github.com/Jack000/
 
 This is a fork of [Dogthemachine's fork](https://github.com/Dogthemachine/Deepnest) of [Jack000's
 Deepnest](https://github.com/Jack000/Deepnest), with changes made to the make it able to be built
-again (only Windows has been updated).
+again (only Windows has tested, but work was done in the `binding.gyp` file to improve
+multi-platform building, and the dependency on a local path to boost has been removed).
 
 No attempts have been made to upgrade to the latest versions, and as such this software depends on
 old packages.  You must pay close attention to the [prerequisites](#prerequisites) to get a

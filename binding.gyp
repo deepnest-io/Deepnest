@@ -3,10 +3,16 @@
     {
       "target_name": "addon",
       "sources": [ "addon.cc", "minkowski.cc" ],
-      'cflags!': [ '-fno-exceptions', "-m64" ],
-      "ldflags": [ "-m elf_i386" ],
-      'cflags_cc!': [ '-fno-exceptions', '-fPIC -m64' ],
+      'cflags!': [ '-fno-exceptions' ],
+      'cflags_cc!': [ '-fno-exceptions' ],
       'conditions': [
+        [ 
+          'OS=="win"', {
+            'cflags!': [ '-fno-exceptions', "-m64" ],
+            "ldflags": [ "-m elf_i386" ],
+            'cflags_cc!': [ '-fno-exceptions', '-fPIC -m64' ],
+          }
+        ],
         [ 
           'OS=="mac"', {
             'xcode_settings': {
