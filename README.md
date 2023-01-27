@@ -121,3 +121,8 @@ Aside from improving the ability to build (mostly in `binding.gyp`, `package.jso
 - Clarified the license is MIT.  Removed an old reference to GPL and added the `license` property to
   `package.json`.  Moved the `LICENSE.txt` file to the root and renamed to `LICENSE`.
 
+## Comments about updating to modern packages
+
+See [Updating Deepnest to use modern Node.js, Electron,
+etc.](https://github.com/cmidgley/Deepnest/issues/1) for information about my failed effort to bring
+Deepnest up to current packages, and thoughts about what it might take.
