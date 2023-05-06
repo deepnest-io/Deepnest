@@ -37,7 +37,7 @@
     "electron": "^1.4.1",
     "electron-builder": "^20.44.4",
     "electron-packager": "^8.0.0",
-    "electron-rebuild": "^1.11.0"
+    "electron-rebuild": "^3.0.0"
   },
   "dependencies": {
     "electron-config": "^0.2.1",
