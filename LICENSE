@@ -19,3 +19,39 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+--------------------------------------------------------------------------------
+
+This project includes code from several other projects under different licenses:
+
+1. d3-polygon: <https://d3js.org/d3-polygon/>
+   License: ISC License
+
+2. FileSaver.js: <https://github.com/eligrey/FileSaver.js>
+   License: MIT License
+
+3. interact.js: <https://github.com/taye/interact.js>
+   License: MIT License
+
+4. jsclipper: <https://sourceforge.net/projects/jsclipper/>
+   License: Boost Software License 1.0
+
+5. pathseg: <https://github.com/progers/pathseg>
+   License: BSD 3-Clause "New" or "Revised" License
+
+6. Ractive.js: <https://github.com/ractivejs/ractive>
+   License: MIT License
+
+7. Simplify.js: <https://github.com/mourner/simplify-js>
+   License: BSD 2-Clause "Simplified" License
+
+8. SvgNest: <https://github.com/Jack000/SvgNest>
+   License: MIT License
+
+9. svg-pan-zoom: <https://github.com/bumbu/svg-pan-zoom>
+   BSD 2-Clause "Simplified" License
+
+10. svgpath: <https://github.com/fontello/svgpath>
+   License: MIT License
+
+For the full license information, please refer to the respective source files in the main/util directory or visit the provided links. Modifications to the original code are documented within the source files. When using or redistributing this project, ensure you comply with the terms and conditions of each individual license.
