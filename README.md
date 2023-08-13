@@ -97,6 +97,56 @@ Create a zip file of this folder for a simple distribution.
 
 If the environment variable "deepnest_debug" has a value of "1", Deepnest will open the browser dev tools (debugger/inspector).
 
+### Debugging on VSCode?
+
+Set your `package.json` like below
+
+```json
+  ...
+  "scripts": {
+    "start": "electron --inspect=9223",
+    ...
+```
+
+Set your `.vscode/launch.json` like below
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Electron: Main",
+            "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron",
+            "runtimeArgs": [
+                "--remote-debugging-port=9223",
+                "."
+            ],
+            "windows": {
+                "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron.cmd"
+            }
+        },
+        {
+            "name": "Electron: Renderer",
+            "type": "chrome",
+            "request": "attach",
+            "port": 9223,
+            "webRoot": "${workspaceFolder}",
+            "timeout": 30000
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Electron: All",
+            "configurations": [
+                "Electron: Main",
+                "Electron: Renderer"
+            ]
+        }
+    ]
+}
+```
 ## License
 
 The main license is the MIT.
