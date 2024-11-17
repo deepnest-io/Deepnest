@@ -1,8 +1,8 @@
 'use strict';
 
-
 function clone(nfp){
 	var newnfp = [];
+
 	for(var i=0; i<nfp.length; i++){
 		newnfp.push({
 			x: nfp[i].x,
@@ -807,381 +807,150 @@ function getInnerNfp(A, B, config){
 	return f;
 }
 
-function placeParts(sheets, parts, config, nestindex){
+// Main function to place parts
+function placeParts(sheets, parts, config, nestIndex) {
+    if (!sheets || sheets.length === 0) return null;
+	
+    // Rotate and prepare parts
+    let rotatedParts = prepareParts(parts, config.rotations);
 
-	if(!sheets){
-		return null;
-	}
-	
-	var i, j, k, m, n, part;
-	
-	var totalnum = parts.length;
-	var totalsheetarea = 0;
-	
-	// total length of merged lines
-	var totalMerged = 0;
-		
-	// rotate paths by given rotation
-	var rotated = [];
-	for(i=0; i<parts.length; i++){
-		var r = rotatePolygon(parts[i], parts[i].rotation);
-		r.rotation = parts[i].rotation;
-		r.source = parts[i].source;
-		r.id = parts[i].id;
-		r.filename = parts[i].filename;
-		
-		rotated.push(r);
-	}
-	
-	parts = rotated;
-	
-	var allplacements = [];
-	var fitness = 0;
-	//var binarea = Math.abs(GeometryUtil.polygonArea(self.binPolygon));
-	
-	var key, nfp;
-	var part;
-	
-	while(parts.length > 0){
-		
-		var placed = [];
-		var placements = [];
-		
-		// open a new sheet
-		var sheet = sheets.shift();
-		var sheetarea = Math.abs(GeometryUtil.polygonArea(sheet));
-		totalsheetarea += sheetarea;
-		
-		fitness += sheetarea; // add 1 for each new sheet opened (lower fitness is better)
-		
-		var clipCache = [];
-		//console.log('new sheet');
-		for(i=0; i<parts.length; i++){
-			console.time('placement');
-			part = parts[i];
-			
-			// inner NFP
-			var sheetNfp = null;				
-			// try all possible rotations until it fits
-			// (only do this for the first part of each sheet, to ensure that all parts that can be placed are, even if we have to to open a lot of sheets)
-			for(j=0; j<config.rotations; j++){
-				sheetNfp = getInnerNfp(sheet, part, config);
-				
-				if(sheetNfp){
-					break;
-				}
-				
-				var r = rotatePolygon(part, 360/config.rotations);
-				r.rotation = part.rotation + (360/config.rotations);
-				r.source = part.source;
-				r.id = part.id;
-				r.filename = part.filename
-				
-				// rotation is not in-place
-				part = r;
-				parts[i] = r;
-				
-				if(part.rotation > 360){
-					part.rotation = part.rotation%360;
-				}
-			}
-			// part unplaceable, skip
-			if(!sheetNfp || sheetNfp.length == 0){
-				continue;
-			}
-						
-			var position = null;
-			
-			if(placed.length == 0){
-				// first placement, put it on the top left corner
-				for(j=0; j<sheetNfp.length; j++){
-					for(k=0; k<sheetNfp[j].length; k++){
-						if(position === null || sheetNfp[j][k].x-part[0].x < position.x || (GeometryUtil.almostEqual(sheetNfp[j][k].x-part[0].x, position.x) && sheetNfp[j][k].y-part[0].y < position.y ) ){
-							position = {
-								x: sheetNfp[j][k].x-part[0].x,
-								y: sheetNfp[j][k].y-part[0].y,
-								id: part.id,
-								rotation: part.rotation,
-								source: part.source,
-								filename: part.filename
-							}
-						}
-					}
-				}
-				if(position === null){
-					console.log(sheetNfp);
-				}
-				placements.push(position);
-				placed.push(part);
-				
-				continue;
-			}
-			
-			var clipperSheetNfp = innerNfpToClipperCoordinates(sheetNfp, config);
-			
-			var clipper = new ClipperLib.Clipper();
-			var combinedNfp = new ClipperLib.Paths();
-			
-			var error = false;
-			
-			// check if stored in clip cache
-			//var startindex = 0;
-			var clipkey = 's:'+part.source+'r:'+part.rotation;
-			var startindex = 0;
-			if(clipCache[clipkey]){
-				var prevNfp = clipCache[clipkey].nfp;
-				clipper.AddPaths(prevNfp, ClipperLib.PolyType.ptSubject, true);
-				startindex = clipCache[clipkey].index;
-			}
-			
-			for(j=startindex; j<placed.length; j++){
-				nfp = getOuterNfp(placed[j], part);
-				// minkowski difference failed. very rare but could happen
-				if(!nfp){
-					error = true;
-					break;
-				}
-				// shift to placed location
-				for(m=0; m<nfp.length; m++){
-					nfp[m].x += placements[j].x;
-					nfp[m].y += placements[j].y;
-				}
-				
-				if(nfp.children && nfp.children.length > 0){
-					for(n=0; n<nfp.children.length; n++){
-						for(var o=0; o<nfp.children[n].length; o++){
-							nfp.children[n][o].x += placements[j].x;
-							nfp.children[n][o].y += placements[j].y;
-						}
-					}
-				}
-				
-				var clipperNfp = nfpToClipperCoordinates(nfp, config);
-				
-				clipper.AddPaths(clipperNfp, ClipperLib.PolyType.ptSubject, true);
-			}
-			
-			if(error || !clipper.Execute(ClipperLib.ClipType.ctUnion, combinedNfp, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero)){
-				console.log('clipper error', error);
-				continue;
-			}
-			
-			/*var converted = [];
-			for(j=0; j<combinedNfp.length; j++){
-				converted.push(toNestCoordinates(combinedNfp[j], config.clipperScale));
-			}*/
-			
-			clipCache[clipkey] = {
-				nfp: combinedNfp,
-				index: placed.length-1
-			};
-			
-			console.log('save cache', placed.length-1);
-			
-			// difference with sheet polygon
-			var finalNfp = new ClipperLib.Paths();
-			clipper = new ClipperLib.Clipper();
-			
-			clipper.AddPaths(combinedNfp, ClipperLib.PolyType.ptClip, true);
-			
-			clipper.AddPaths(clipperSheetNfp, ClipperLib.PolyType.ptSubject, true);
-			
-			if(!clipper.Execute(ClipperLib.ClipType.ctDifference, finalNfp, ClipperLib.PolyFillType.pftEvenOdd, ClipperLib.PolyFillType.pftNonZero)){
-				continue;
-			}
-			
-			if(!finalNfp || finalNfp.length == 0){
-				continue;
-			}
-			
-			var f = [];
-			for(j=0; j<finalNfp.length; j++){
-				// back to normal scale
-				f.push(toNestCoordinates(finalNfp[j], config.clipperScale));
-			}
-			finalNfp = f;
-						
-			// choose placement that results in the smallest bounding box/hull etc
-			// todo: generalize gravity direction
-			var minwidth = null;
-			var minarea = null;
-			var minx = null;
-			var miny = null;
-			var nf, area, shiftvector;
-			
-			var allpoints = [];
-			for(m=0; m<placed.length; m++){
-				for(n=0; n<placed[m].length; n++){
-					allpoints.push({x:placed[m][n].x+placements[m].x, y: placed[m][n].y+placements[m].y});
-				}
-			}
-			
-			var allbounds;
-			var partbounds;
-			if(config.placementType == 'gravity' || config.placementType == 'box'){
-				allbounds = GeometryUtil.getPolygonBounds(allpoints);
-				
-				var partpoints = [];
-				for(m=0; m<part.length; m++){
-					partpoints.push({x: part[m].x, y:part[m].y});
-				}
-				partbounds = GeometryUtil.getPolygonBounds(partpoints);
-			}
-			else{
-				allpoints = getHull(allpoints);
-			}
-			for(j=0; j<finalNfp.length; j++){
-				nf = finalNfp[j];
-				//console.log('evalnf',nf.length);
-				for(k=0; k<nf.length; k++){
-					
-					shiftvector = {
-						x: nf[k].x-part[0].x,
-						y: nf[k].y-part[0].y,
-						id: part.id,
-						source: part.source,
-						rotation: part.rotation,
-						filename: part.filename
-					};
-					
-					
-					/*for(m=0; m<part.length; m++){
-						localpoints.push({x: part[m].x+shiftvector.x, y:part[m].y+shiftvector.y});
-					}*/
-					//console.time('evalbounds');
-					
-					if(config.placementType == 'gravity' || config.placementType == 'box'){
-						var rectbounds = GeometryUtil.getPolygonBounds([
-							// allbounds points
-							{x: allbounds.x, y:allbounds.y},
-							{x: allbounds.x+allbounds.width, y:allbounds.y},
-							{x: allbounds.x+allbounds.width, y:allbounds.y+allbounds.height},
-							{x: allbounds.x, y:allbounds.y+allbounds.height},
-							
-							// part points
-							{x: partbounds.x+shiftvector.x, y:partbounds.y+shiftvector.y},
-							{x: partbounds.x+partbounds.width+shiftvector.x, y:partbounds.y+shiftvector.y},
-							{x: partbounds.x+partbounds.width+shiftvector.x, y:partbounds.y+partbounds.height+shiftvector.y},
-							{x: partbounds.x+shiftvector.x, y:partbounds.y+partbounds.height+shiftvector.y}
-						]);
-						
-						// weigh width more, to help compress in direction of gravity
-						if(config.placementType == 'gravity'){
-							area = rectbounds.width*2 + rectbounds.height;
-						}
-						else{
-							area = rectbounds.width * rectbounds.height;
-						}
-					}
-					else{
-						// must be convex hull
-						var localpoints = clone(allpoints);
-						
-						for(m=0; m<part.length; m++){
-							localpoints.push({x: part[m].x+shiftvector.x, y:part[m].y+shiftvector.y});
-						}
-						
-						area = Math.abs(GeometryUtil.polygonArea(getHull(localpoints)));
-						shiftvector.hull = getHull(localpoints);
-						shiftvector.hullsheet = getHull(sheet);
-					}
-					
-					//console.timeEnd('evalbounds');
-					//console.time('evalmerge');
-					
-					if(config.mergeLines){
-						// if lines can be merged, subtract savings from area calculation						
-						var shiftedpart = shiftPolygon(part, shiftvector);
-						var shiftedplaced = [];
-						
-						for(m=0; m<placed.length; m++){
-							shiftedplaced.push(shiftPolygon(placed[m], placements[m]));
-						}
-						
-						// don't check small lines, cut off at about 1/2 in
-						var minlength = 0.5*config.scale;
-						var merged = mergedLength(shiftedplaced, shiftedpart, minlength, 0.1*config.curveTolerance);
-						area -= merged.totalLength*config.timeRatio;
-					}
-					
-					//console.timeEnd('evalmerge');
-					
-					if(
-					minarea === null || 
-					area < minarea || 
-					(GeometryUtil.almostEqual(minarea, area) && (minx === null || shiftvector.x < minx)) ||
-					(GeometryUtil.almostEqual(minarea, area) && (minx !== null && GeometryUtil.almostEqual(shiftvector.x, minx) && shiftvector.y < miny))
-					){
-						minarea = area;
-						minwidth = rectbounds ? rectbounds.width : 0;
-						position = shiftvector;
-						if(minx === null || shiftvector.x < minx){
-							minx = shiftvector.x;
-						}
-						if(miny === null || shiftvector.y < miny){
-							miny = shiftvector.y;
-						}
-						
-						if(config.mergeLines){
-							position.mergedLength = merged.totalLength;
-							position.mergedSegments = merged.segments;
-						}
-					}
-				}
-			}
-			
-			if(position){
-				placed.push(part);
-				placements.push(position);
-				if(position.mergedLength){
-					totalMerged += position.mergedLength;
-				}
-			}
-			
-			// send placement progress signal
-			var placednum = placed.length;
-			for(j=0; j<allplacements.length; j++){
-				placednum += allplacements[j].sheetplacements.length;
-			}
-			//console.log(placednum, totalnum);
-			ipcRenderer.send('background-progress', {index: nestindex, progress: 0.5 + 0.5*(placednum/totalnum)});
-			console.timeEnd('placement');
-		}
-		
-		//if(minwidth){
-		fitness += (minwidth/sheetarea) + minarea;
-		//}
-		
-		for(i=0; i<placed.length; i++){
-			var index = parts.indexOf(placed[i]);
-			if(index >= 0){
-				parts.splice(index,1);
-			}
-		}
-		
-		if(placements && placements.length > 0){
-			allplacements.push({sheet: sheet.source, sheetid: sheet.id, sheetplacements: placements});
-		}
-		else{
-			break; // something went wrong
-		}
-		
-		if(sheets.length == 0){
-			break;
-		}
-	}
-	
-	// there were parts that couldn't be placed
-	// scale this value high - we really want to get all the parts in, even at the cost of opening new sheets
-	for(i=0; i<parts.length; i++){
-		fitness += 100000000*(Math.abs(GeometryUtil.polygonArea(parts[i]))/totalsheetarea);
-	}
-	// send finish progerss signal
-	ipcRenderer.send('background-progress', {index: nestindex, progress: -1});
+    let allPlacements = [];
+    let fitness = 0;
+    let totalSheetArea = 0;
+    let totalMergedLength = 0;
 
-	console.log('WATCH', allplacements);
-	
-	return {placements: allplacements, fitness: fitness, area: sheetarea, mergedLength: totalMerged };
+    while (rotatedParts.length > 0 && sheets.length > 0) {
+        const sheet = sheets.shift();
+        const sheetArea = calculateArea(sheet);
+        totalSheetArea += sheetArea;
+        fitness += sheetArea; // Add penalty for using a new sheet
+
+        const { placements, placedParts, mergedLength } = placePartsOnSheet(sheet, rotatedParts, config);
+
+        // Update metrics
+        totalMergedLength += mergedLength;
+        fitness += calculateFitness(sheetArea, placements);
+
+        // Remove placed parts from the pool
+        rotatedParts = rotatedParts.filter(part => !placedParts.includes(part));
+
+        if (placements.length > 0) {
+            allPlacements.push({
+                sheet: sheet.source,
+                sheetId: sheet.id,
+                sheetPlacements: placements,
+            });
+        } else {
+            break; // No parts could be placed; exit loop
+        }
+    }
+
+    // Add penalty for unplaced parts
+    fitness += calculateUnplacedPenalty(rotatedParts, totalSheetArea);
+
+    // Notify completion
+    notifyProgress(nestIndex, -1);
+
+    return {
+        placements: allPlacements,
+        fitness,
+        totalMergedLength,
+    };
+}
+
+// Helper to prepare parts by rotating them
+function prepareParts(parts, rotations) {
+    return parts.map(part => {
+        let rotated = rotatePolygon(part, part.rotation);
+        rotated.rotation = part.rotation;
+        rotated.source = part.source;
+        rotated.id = part.id;
+        rotated.filename = part.filename;
+        return rotated;
+    });
+}
+
+// Place parts on a single sheet
+function placePartsOnSheet(sheet, parts, config) {
+    const placedParts = [];
+    const placements = [];
+    let mergedLength = 0;
+    let clipCache = {};
+
+    for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        const position = findBestPlacement(sheet, part, placements, placedParts, clipCache, config);
+
+        if (position) {
+            placedParts.push(part);
+            placements.push(position);
+
+            if (position.mergedLength) {
+                mergedLength += position.mergedLength;
+            }
+        }
+    }
+
+    return { placements, placedParts, mergedLength };
+}
+
+// Find the best placement for a single part
+function findBestPlacement(sheet, part, placements, placedParts, clipCache, config) {
+    let bestPlacement = null;
+    let minArea = Infinity;
+
+    const sheetNfp = getInnerNfp(sheet, part, config);
+    if (!sheetNfp) return null;
+
+    for (const nf of sheetNfp) {
+        for (const point of nf) {
+            const shiftVector = calculateShiftVector(point, part[0]);
+
+            const area = evaluatePlacement(sheet, part, shiftVector, placedParts, placements, config);
+            if (area < minArea) {
+                minArea = area;
+                bestPlacement = shiftVector;
+            }
+        }
+    }
+
+    return bestPlacement;
+}
+
+// Evaluate the placement quality based on bounding box or convex hull
+function evaluatePlacement(sheet, part, shiftVector, placedParts, placements, config) {
+    const shiftedPart = shiftPolygon(part, shiftVector);
+    const combinedParts = [...placedParts.map((p, i) => shiftPolygon(p, placements[i])), shiftedPart];
+
+    if (config.placementType === 'gravity') {
+        const bounds = GeometryUtil.getPolygonBounds(combinedParts.flat());
+        return bounds.width * 2 + bounds.height; // Example gravity-based heuristic
+    } else {
+        const hull = getHull(combinedParts.flat());
+        return Math.abs(GeometryUtil.polygonArea(hull));
+    }
+}
+
+// Calculate the shift vector for positioning a part
+function calculateShiftVector(point, origin) {
+    return { x: point.x - origin.x, y: point.y - origin.y };
+}
+
+// Calculate penalty for unplaced parts
+function calculateUnplacedPenalty(parts, totalSheetArea) {
+    return parts.reduce((penalty, part) => {
+        return penalty + 100000000 * (Math.abs(GeometryUtil.polygonArea(part)) / totalSheetArea);
+    }, 0);
+}
+
+// Calculate total fitness for a sheet
+function calculateFitness(sheetArea, placements) {
+    return (placements.length / sheetArea);
+}
+
+// Notify progress updates
+function notifyProgress(index, progress) {
+    ipcRenderer.send('background-progress', { index, progress });
 }
 
 // clipperjs uses alerts for warnings

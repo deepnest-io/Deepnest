@@ -27,9 +27,9 @@
     "email": "jak000@gmail.com"
   },
   "devDependencies": {
-    "electron": "^13.0.0",
-    "electron-packager": "^17.1.1",
     "@electron/rebuild": "^3.2.9",
+    "electron": "^13.6.9",
+    "electron-packager": "^17.1.1",
     "shx": "^0.3.4"
   },
   "dependencies": {
