@@ -27,16 +27,18 @@
     "email": "jak000@gmail.com"
   },
   "devDependencies": {
-    "electron": "^13.0.0",
-    "electron-packager": "^17.1.1",
     "@electron/rebuild": "^3.2.9",
+    "electron": "^33.2.0",
+    "electron-packager": "^17.1.1",
     "shx": "^0.3.4"
   },
   "dependencies": {
+    "electron-rebuild": "^3.2.9",
     "electron-settings": "^4.0.2",
     "electron-window-manager": "^1.0.6",
     "graceful-fs": "^4.2.11",
     "nan": "^2.17.0",
+    "node-gyp": "^10.2.0",
     "request": "^2.88.2"
   },
   "build": {
