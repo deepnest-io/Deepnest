@@ -15,270 +15,203 @@ http://www.boost.org/LICENSE_1_0.txt).
 
 #include <iostream>
 #include <string>
-#include <iostream>
 #include <sstream>
 #include <limits>
+#include <vector>
+#include <algorithm>
 
 #include <nan.h>
 #include <boost/polygon/polygon.hpp>
 
-#undef min
-#undef max
+typedef boost::polygon::point_data<int> Point;
+typedef boost::polygon::polygon_set_data<int> PolygonSet;
+typedef boost::polygon::polygon_with_holes_data<int> Polygon;
+typedef std::pair<Point, Point> Edge;
 
-typedef boost::polygon::point_data<int> point;
-typedef boost::polygon::polygon_set_data<int> polygon_set;
-typedef boost::polygon::polygon_with_holes_data<int> polygon;
-typedef std::pair<point, point> edge;
-using namespace boost::polygon::operators;
-
-void convolve_two_segments(std::vector<point>& figure, const edge& a, const edge& b) {
-  using namespace boost::polygon;
-  figure.clear();
-  figure.push_back(point(a.first));
-  figure.push_back(point(a.first));
-  figure.push_back(point(a.second));
-  figure.push_back(point(a.second));
-  convolve(figure[0], b.second);
-  convolve(figure[1], b.first);
-  convolve(figure[2], b.first);
-  convolve(figure[3], b.second);
+void convolveTwoSegments(std::vector<Point>& figure, const Edge& a, const Edge& b) {
+    figure.clear();
+    figure.push_back(Point(a.first));
+    figure.push_back(Point(a.first));
+    figure.push_back(Point(a.second));
+    figure.push_back(Point(a.second));
+    boost::polygon::convolve(figure[0], b.second);
+    boost::polygon::convolve(figure[1], b.first);
+    boost::polygon::convolve(figure[2], b.first);
+    boost::polygon::convolve(figure[3], b.second);
 }
 
-template <typename itrT1, typename itrT2>
-void convolve_two_point_sequences(polygon_set& result, itrT1 ab, itrT1 ae, itrT2 bb, itrT2 be) {
-  using namespace boost::polygon;
-  if(ab == ae || bb == be)
-    return;
-  point first_a = *ab;
-  point prev_a = *ab;
-  std::vector<point> vec;
-  polygon poly;
-  ++ab;
-  for( ; ab != ae; ++ab) {
-    point first_b = *bb;
-    point prev_b = *bb;
-    itrT2 tmpb = bb;
-    ++tmpb;
-    for( ; tmpb != be; ++tmpb) {
-      convolve_two_segments(vec, std::make_pair(prev_b, *tmpb), std::make_pair(prev_a, *ab));
-      set_points(poly, vec.begin(), vec.end());
-      result.insert(poly);
-      prev_b = *tmpb;
+template <typename Iterator1, typename Iterator2>
+void convolveTwoPointSequences(PolygonSet& result, Iterator1 ab, Iterator1 ae, Iterator2 bb, Iterator2 be) {
+    if (ab == ae || bb == be) return;
+
+    Point firstA = *ab;
+    Point prevA = *ab;
+    std::vector<Point> vec;
+    Polygon poly;
+    ++ab;
+    for (; ab != ae; ++ab) {
+        Point firstB = *bb;
+        Point prevB = *bb;
+        Iterator2 tmpB = bb;
+        ++tmpB;
+        for (; tmpB != be; ++tmpB) {
+            convolveTwoSegments(vec, std::make_pair(prevB, *tmpB), std::make_pair(prevA, *ab));
+            boost::polygon::set_points(poly, vec.begin(), vec.end());
+            result.insert(poly);
+            prevB = *tmpB;
+        }
+        prevA = *ab;
     }
-    prev_a = *ab;
-  }
 }
 
-template <typename itrT>
-void convolve_point_sequence_with_polygons(polygon_set& result, itrT b, itrT e, const std::vector<polygon>& polygons) {
-  using namespace boost::polygon;
-  for(std::size_t i = 0; i < polygons.size(); ++i) {
-    convolve_two_point_sequences(result, b, e, begin_points(polygons[i]), end_points(polygons[i]));
-    for(polygon_with_holes_traits<polygon>::iterator_holes_type itrh = begin_holes(polygons[i]);
-        itrh != end_holes(polygons[i]); ++itrh) {
-      convolve_two_point_sequences(result, b, e, begin_points(*itrh), end_points(*itrh));
+template <typename Iterator>
+void convolvePointSequenceWithPolygons(PolygonSet& result, Iterator b, Iterator e, const std::vector<Polygon>& polygons) {
+    for (std::size_t i = 0; i < polygons.size(); ++i) {
+        convolveTwoPointSequences(result, b, e, boost::polygon::begin_points(polygons[i]), boost::polygon::end_points(polygons[i]));
+        for (auto itrh = boost::polygon::begin_holes(polygons[i]); itrh != boost::polygon::end_holes(polygons[i]); ++itrh) {
+            convolveTwoPointSequences(result, b, e, boost::polygon::begin_points(*itrh), boost::polygon::end_points(*itrh));
+        }
     }
-  }
 }
 
-void convolve_two_polygon_sets(polygon_set& result, const polygon_set& a, const polygon_set& b) {
-  using namespace boost::polygon;
-  result.clear();
-  std::vector<polygon> a_polygons;
-  std::vector<polygon> b_polygons;
-  a.get(a_polygons);
-  b.get(b_polygons);
-  for(std::size_t ai = 0; ai < a_polygons.size(); ++ai) {
-    convolve_point_sequence_with_polygons(result, begin_points(a_polygons[ai]), 
-                                          end_points(a_polygons[ai]), b_polygons);
-    for(polygon_with_holes_traits<polygon>::iterator_holes_type itrh = begin_holes(a_polygons[ai]);
-        itrh != end_holes(a_polygons[ai]); ++itrh) {
-      convolve_point_sequence_with_polygons(result, begin_points(*itrh), 
-                                            end_points(*itrh), b_polygons);
+void convolveTwoPolygonSets(PolygonSet& result, const PolygonSet& a, const PolygonSet& b) {
+    result.clear();
+    std::vector<Polygon> aPolygons, bPolygons;
+    a.get(aPolygons);
+    b.get(bPolygons);
+
+    for (std::size_t ai = 0; ai < aPolygons.size(); ++ai) {
+        convolvePointSequenceWithPolygons(result, boost::polygon::begin_points(aPolygons[ai]), boost::polygon::end_points(aPolygons[ai]), bPolygons);
+        for (auto itrh = boost::polygon::begin_holes(aPolygons[ai]); itrh != boost::polygon::end_holes(aPolygons[ai]); ++itrh) {
+            convolvePointSequenceWithPolygons(result, boost::polygon::begin_points(*itrh), boost::polygon::end_points(*itrh), bPolygons);
+        }
+        for (std::size_t bi = 0; bi < bPolygons.size(); ++bi) {
+            Polygon tmpPoly = aPolygons[ai];
+            result.insert(boost::polygon::convolve(tmpPoly, *(boost::polygon::begin_points(bPolygons[bi]))));
+            tmpPoly = bPolygons[bi];
+            result.insert(boost::polygon::convolve(tmpPoly, *(boost::polygon::begin_points(aPolygons[ai]))));
+        }
     }
-    for(std::size_t bi = 0; bi < b_polygons.size(); ++bi) {
-      polygon tmp_poly = a_polygons[ai];
-      result.insert(convolve(tmp_poly, *(begin_points(b_polygons[bi]))));
-      tmp_poly = b_polygons[bi];
-      result.insert(convolve(tmp_poly, *(begin_points(a_polygons[ai]))));
-    }
-  }
 }
 
-double inputscale;
-
-using v8::Local;
-using v8::Array;
-using v8::Isolate;
-using v8::String;
-using v8::Local;
-using v8::Object;
-using v8::Value;
-
-using namespace boost::polygon;
+double inputScale;
 
 NAN_METHOD(calculateNFP) {
-  //std::stringstream buffer;
-  //std::streambuf * old = std::cout.rdbuf(buffer.rdbuf());
-  v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
+    v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
+    v8::Isolate* isolate = info.GetIsolate();
 
-  Isolate* isolate = info.GetIsolate();
+    v8::Local<v8::Object> group = v8::Local<v8::Object>::Cast(info[0]);
+    v8::Local<v8::Array> A = v8::Local<v8::Array>::Cast(group->Get(context, v8::String::NewFromUtf8(isolate, "A", v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked());
+    v8::Local<v8::Array> B = v8::Local<v8::Array>::Cast(group->Get(context, v8::String::NewFromUtf8(isolate, "B", v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked());
 
-  Local<Object> group = Local<Object>::Cast(info[0]);
-  Local<Array> A = Local<Array>::Cast(group->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"A",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked());
-  Local<Array> B = Local<Array>::Cast(group->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"B",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked());
-  
-  polygon_set a, b, c;
-  std::vector<polygon> polys;
-  std::vector<point> pts;
-  
-  // get maximum bounds for scaling factor
-  unsigned int len = A->Length();
-  double Amaxx = 0;
-  double Aminx = 0;
-  double Amaxy = 0;
-  double Aminy = 0;
-  for (unsigned int i = 0; i < len; i++) {
-  	Local<Object> obj = Local<Object>::Cast(A->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
-  	Amaxx = (std::max)(Amaxx, (double)obj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"x",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust());
-  	Aminx = (std::min)(Aminx, (double)obj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"x",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust());
-  	Amaxy = (std::max)(Amaxy, (double)obj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"y",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust());
-  	Aminy = (std::min)(Aminy, (double)obj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"y",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust());
-  }
-  
-  len = B->Length();
-  double Bmaxx = 0;
-  double Bminx = 0;
-  double Bmaxy = 0;
-  double Bminy = 0;
-  for (unsigned int i = 0; i < len; i++) {
-  	Local<Object> obj = Local<Object>::Cast(B->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
-  	Bmaxx = (std::max)(Bmaxx, (double)obj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"x",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust());
-  	Bminx = (std::min)(Bminx, (double)obj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"x",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust());
-  	Bmaxy = (std::max)(Bmaxy, (double)obj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"y",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust());
-  	Bminy = (std::min)(Bminy, (double)obj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"y",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust());
-  }
-  
-  double Cmaxx = Amaxx + Bmaxx;
-  double Cminx = Aminx + Bminx;
-  double Cmaxy = Amaxy + Bmaxy;
-  double Cminy = Aminy + Bminy;
-  
-  double maxxAbs = (std::max)(Cmaxx, std::fabs(Cminx));
-  double maxyAbs = (std::max)(Cmaxy, std::fabs(Cminy));
-  
-  double maxda = (std::max)(maxxAbs, maxyAbs);
-  int maxi = std::numeric_limits<int>::max();
-  
-  if(maxda < 1){
-  	maxda = 1;
-  }
-  
-  // why 0.1? dunno. it doesn't screw up with 0.1
-  inputscale = (0.1f * (double)(maxi)) / maxda;
-  
-  //double scale = 1000;
-  len = A->Length();
-  
-  for (unsigned int i = 0; i < len; i++) {
-    Local<Object> obj = Local<Object>::Cast(A->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
-    int x = (int)(inputscale * (double)obj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"x",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust());
-    int y = (int)(inputscale * (double)obj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"y",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust());
-        
-    pts.push_back(point(x, y));
-  }
-  
-  polygon poly;
-  boost::polygon::set_points(poly, pts.begin(), pts.end());
-  a+=poly;
-  
-  // subtract holes from a here...
-  Local<Array> holes = Local<Array>::Cast(A->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"children",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked());
-  len = holes->Length();
-  
-  for(unsigned int i=0; i<len; i++){
-    Local<Array> hole = Local<Array>::Cast(holes->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
+    PolygonSet a, b, c;
+    std::vector<Polygon> polys;
+    std::vector<Point> pts;
+
+    // Calculate bounds for scaling factor
+    double AmaxX = 0, AminX = 0, AmaxY = 0, AminY = 0;
+    double BmaxX = 0, BminX = 0, BmaxY = 0, BminY = 0;
+
+    auto calculateBounds = [&](v8::Local<v8::Array> array, double& maxX, double& minX, double& maxY, double& minY) {
+        unsigned int len = array->Length();
+        for (unsigned int i = 0; i < len; i++) {
+            v8::Local<v8::Object> obj = v8::Local<v8::Object>::Cast(array->Get(context, i).ToLocalChecked());
+            double x = obj->Get(context, v8::String::NewFromUtf8(isolate, "x", v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust();
+            double y = obj->Get(context, v8::String::NewFromUtf8(isolate, "y", v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust();
+            maxX = std::max(maxX, x);
+            minX = std::min(minX, x);
+            maxY = std::max(maxY, y);
+            minY = std::min(minY, y);
+        }
+    };
+
+    calculateBounds(A, AmaxX, AminX, AmaxY, AminY);
+    calculateBounds(B, BmaxX, BminX, BmaxY, BminY);
+
+    double CmaxX = AmaxX + BmaxX;
+    double CminX = AminX + BminX;
+    double CmaxY = AmaxY + BmaxY;
+    double CminY = AminY + BminY;
+
+    double maxXAbs = std::max(CmaxX, std::fabs(CminX));
+    double maxYAbs = std::max(CmaxY, std::fabs(CminY));
+    double maxDa = std::max(maxXAbs, maxYAbs);
+    int maxI = std::numeric_limits<int>::max();
+
+    if (maxDa < 1) maxDa = 1;
+
+    inputScale = (0.1f * static_cast<double>(maxI)) / maxDa;
+
+    auto convertPoints = [&](v8::Local<v8::Array> array, std::vector<Point>& points) {
+        unsigned int len = array->Length();
+        for (unsigned int i = 0; i < len; i++) {
+            v8::Local<v8::Object> obj = v8::Local<v8::Object>::Cast(array->Get(context, i).ToLocalChecked());
+            int x = static_cast<int>(inputScale * obj->Get(context, v8::String::NewFromUtf8(isolate, "x", v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust());
+            int y = static_cast<int>(inputScale * obj->Get(context, v8::String::NewFromUtf8(isolate, "y", v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust());
+            points.push_back(Point(x, y));
+        }
+    };
+
+    convertPoints(A, pts);
+    Polygon poly;
+    boost::polygon::set_points(poly, pts.begin(), pts.end());
+    a += poly;
+
+    v8::Local<v8::Array> holes = v8::Local<v8::Array>::Cast(A->Get(context, v8::String::NewFromUtf8(isolate, "children", v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked());
+    unsigned int holesLen = holes->Length();
+    for (unsigned int i = 0; i < holesLen; i++) {
+        v8::Local<v8::Array> hole = v8::Local<v8::Array>::Cast(holes->Get(context, i).ToLocalChecked());
+        pts.clear();
+        convertPoints(hole, pts);
+        boost::polygon::set_points(poly, pts.begin(), pts.end());
+        a -= poly;
+    }
+
     pts.clear();
-    unsigned int hlen = hole->Length();
-    for(unsigned int j=0; j<hlen; j++){
-    	Local<Object> obj = Local<Object>::Cast(hole->Get(isolate->GetCurrentContext(), j).ToLocalChecked());
-    	int x = (int)(inputscale * (double)obj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"x",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust());
-    	int y = (int)(inputscale * (double)obj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"y",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust());
-    	pts.push_back(point(x, y));
+    convertPoints(B, pts);
+    double xShift = 0, yShift = 0;
+    for (unsigned int i = 0; i < pts.size(); i++) {
+        if (i == 0) {
+            xShift = static_cast<double>(pts[i].get(boost::polygon::HORIZONTAL)) / inputScale;
+            yShift = static_cast<double>(pts[i].get(boost::polygon::VERTICAL)) / inputScale;
+        }
+        pts[i] = Point(-pts[i].get(boost::polygon::HORIZONTAL), -pts[i].get(boost::polygon::VERTICAL));
     }
     boost::polygon::set_points(poly, pts.begin(), pts.end());
-    a -= poly;
-  }
-  
-  //and then load points B
-  pts.clear();
-  len = B->Length();
-  
-  //javascript nfps are referenced with respect to the first point
-  double xshift = 0;
-  double yshift = 0;
-  
-  for (unsigned int i = 0; i < len; i++) {
-    Local<Object> obj = Local<Object>::Cast(B->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
-    int x = -(int)(inputscale * (double)obj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"x",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust());
-    int y = -(int)(inputscale * (double)obj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"y",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust());
-    pts.push_back(point(x, y));
-    
-    if(i==0){
-    	xshift = (double)obj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"x",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust();
-    	yshift = (double)obj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"y",v8::NewStringType::kNormal).ToLocalChecked()).ToLocalChecked()->NumberValue(context).FromJust();
+    b += poly;
+
+    polys.clear();
+    convolveTwoPolygonSets(c, a, b);
+    c.get(polys);
+
+    v8::Local<v8::Array> resultList = v8::Array::New(isolate);
+    for (unsigned int i = 0; i < polys.size(); ++i) {
+        v8::Local<v8::Array> pointList = v8::Array::New(isolate);
+        int j = 0;
+        for (auto itr = polys[i].begin(); itr != polys[i].end(); ++itr) {
+            v8::Local<v8::Object> p = v8::Object::New(isolate);
+            p->Set(context, v8::String::NewFromUtf8(isolate, "x", v8::NewStringType::kNormal).ToLocalChecked(), v8::Number::New(isolate, static_cast<double>((*itr).get(boost::polygon::HORIZONTAL)) / inputScale + xShift));
+            p->Set(context, v8::String::NewFromUtf8(isolate, "y", v8::NewStringType::kNormal).ToLocalChecked(), v8::Number::New(isolate, static_cast<double>((*itr).get(boost::polygon::VERTICAL)) / inputScale + yShift));
+            pointList->Set(context, j++, p);
+        }
+
+        v8::Local<v8::Array> children = v8::Array::New(isolate);
+        int k = 0;
+        for (auto itrh = boost::polygon::begin_holes(polys[i]); itrh != boost::polygon::end_holes(polys[i]); ++itrh) {
+            v8::Local<v8::Array> child = v8::Array::New(isolate);
+            int z = 0;
+            for (auto itr2 = (*itrh).begin(); itr2 != (*itrh).end(); ++itr2) {
+                v8::Local<v8::Object> c = v8::Object::New(isolate);
+                c->Set(context, v8::String::NewFromUtf8(isolate, "x", v8::NewStringType::kNormal).ToLocalChecked(), v8::Number::New(isolate, static_cast<double>((*itr2).get(boost::polygon::HORIZONTAL)) / inputScale + xShift));
+                c->Set(context, v8::String::NewFromUtf8(isolate, "y", v8::NewStringType::kNormal).ToLocalChecked(), v8::Number::New(isolate, static_cast<double>((*itr2).get(boost::polygon::VERTICAL)) / inputScale + yShift));
+                child->Set(context, z++, c);
+            }
+            children->Set(context, k++, child);
+        }
+
+        pointList->Set(context, v8::String::NewFromUtf8(isolate, "children", v8::NewStringType::kNormal).ToLocalChecked(), children);
+        resultList->Set(context, i, pointList);
     }
-  }
-  
-  boost::polygon::set_points(poly, pts.begin(), pts.end());
-  b+=poly;
-  
-  polys.clear();
-  
-  convolve_two_polygon_sets(c, a, b);
-  c.get(polys);
-  
-  Local<Array> result_list = Array::New(isolate);
-  
-  for(unsigned int i = 0; i < polys.size(); ++i ){
-      
-  	Local<Array> pointlist = Array::New(isolate);
-  	int j = 0;
-  	  	
-  	for(polygon_traits<polygon>::iterator_type itr = polys[i].begin(); itr != polys[i].end(); ++itr) {
-  	   Local<Object> p = Object::New(isolate);
-  	 //  std::cout << (double)(*itr).get(boost::polygon::HORIZONTAL) / inputscale << std::endl;
-       p->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"x",v8::NewStringType::kNormal).ToLocalChecked(), v8::Number::New(isolate, ((double)(*itr).get(boost::polygon::HORIZONTAL)) / inputscale + xshift));
-       p->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate,"y",v8::NewStringType::kNormal).ToLocalChecked(), v8::Number::New(isolate, ((double)(*itr).get(boost::polygon::VERTICAL)) / inputscale + yshift));
-       
-       pointlist->Set(isolate->GetCurrentContext(), j, p);
-       j++;
-    }
-    
-    // holes
-    Local<Array> children = Array::New(isolate);
-    int k = 0;
-    for(polygon_with_holes_traits<polygon>::iterator_holes_type itrh = begin_holes(polys[i]); itrh != end_holes(polys[i]); ++itrh){
-    	Local<Array> child = Array::New(isolate);
-    	int z = 0;
-    	for(polygon_traits<polygon>::iterator_type itr2 = (*itrh).begin(); itr2 != (*itrh).end(); ++itr2) {
-    		Local<Object> c = Object::New(isolate);
-    		c->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "x",v8::NewStringType::kNormal).ToLocalChecked(), v8::Number::New(isolate, ((double)(*itr2).get(boost::polygon::HORIZONTAL)) / inputscale + xshift));
-    		c->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "y",v8::NewStringType::kNormal).ToLocalChecked(), v8::Number::New(isolate, ((double)(*itr2).get(boost::polygon::VERTICAL)) / inputscale + yshift));
-    		
-    		child->Set(isolate->GetCurrentContext(), z, c);
-    		z++;
-    	}
-    	children->Set(isolate->GetCurrentContext(), k, child);
-    	k++;
-    }
-    
-    pointlist->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "children",v8::NewStringType::kNormal).ToLocalChecked(), children);
-    
-    result_list->Set(isolate->GetCurrentContext(), i, pointlist);
-  }
-  
-  //std::string text = buffer.str();
-  
-  info.GetReturnValue().Set(result_list);  
+
+    info.GetReturnValue().Set(resultList);
 }
