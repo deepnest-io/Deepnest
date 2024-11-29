@@ -1,64 +1,83 @@
 /*!
- * Deepnest
- * Licensed under GPLv3
+ * Deepnest - Main Logic for Nesting Tool
+ * 
+ * This script is responsible for managing SVG nesting operations, 
+ * including parsing SVG files, running nesting optimizations, 
+ * and handling different configurations.
+ * 
+ * Dependencies:
+ * - Uses Electron's ipcRenderer for inter-process communication.
+ * - Depends on SvgParser for handling SVG files.
+ * - Uses ClipperLib for polygon offset operations.
+ *
+ * Key Features:
+ * - SVG Importing & Parsing (`importsvg`)
+ * - Polygon Operations (e.g., simplification, offsetting)
+ * - Manages nesting optimization using a genetic algorithm (`GeneticAlgorithm`)
  */
- 
-(function(root){
-	'use strict';
-	
-	const { ipcRenderer } = require('electron');
-	const path = require('path')
-	const url = require('url')
-	
-	root.DeepNest = new DeepNest();
-	
-	function DeepNest(){
-		var self = this;
+
+//Import required moduels from Electron and other libraries.
+const { ipcRenderer } = require('electron');
+const path = require('path')
+const url = require('url')
+
+// Initialize the main DeepNest object.
+root.DeepNest = new DeepNest();
+
+/**
+ * DeepNest Constructor
+ * This is the main class for managing nesting operations.
+ * Initializes parts lists, configurations, and methods for nesting.
+ */
+function DeepNest(){
+	var self = this;
+	// Stores the parsed SVG	
+	var svg = null;
+	// Configuration for nesting. These values can be adjusted to influence the nesting behavior.	
+	var config = {
+		clipperScale: 10000000,
+		curveTolerance: 0.3, 
+		spacing: 0,
+		rotations: 4,
+		populationSize: 10,
+		mutationRate: 10,
+		threads: 4,
+		placementType: 'gravity',
+		mergeLines: true,
+		timeRatio: 0.5,
+		scale: 72,
+		simplify: false
+	};
 		
-		var svg = null;
-		
-		var config = {
-			clipperScale: 10000000,
-			curveTolerance: 0.3, 
-			spacing: 0,
-			rotations: 4,
-			populationSize: 10,
-			mutationRate: 10,
-			threads: 4,
-			placementType: 'gravity',
-			mergeLines: true,
-			timeRatio: 0.5,
-			scale: 72,
-			simplify: false
-		};
-		
-		// list of imported files
-		// import: {filename: 'blah.svg', svg: svgroot}
+		// Imported files, parts, and related info
 		this.imports = [];
-		
-		// list of all extracted parts
-		// part: {name: 'part name', quantity: ...}
 		this.parts = [];
-		
-		// a pure polygonal representation of parts that lives only during the nesting step
 		this.partsTree = [];
-		
+		this.nests = []; // List of placements during nesting
+
+		// Keeps track of whether the nesting is running
 		this.working = false;
 		
-		var GA = null;
+		var GA = null; // Genetic algorithm instance
 		var best = null;
 		var workerTimer = null;
-		var progress = 0;
 		
 		var progressCallback = null;
 		var displayCallback = null;
-		// a running list of placements
-		this.nests = [];
-		
+
+		/**
+    		 * importsvg(filename, dirpath, svgstring, scalingFactor, dxfFlag)
+     		* This function imports an SVG file and extracts parts to be used for nesting.
+     		* 
+     		* @param {string} filename - The name of the SVG file.
+     		* @param {string} dirpath - The directory where the SVG is located.
+     		* @param {string} svgstring - The content of the SVG file in string format.
+     		* @param {number} scalingFactor - Scaling applied to adjust dimensions.
+     		* @param {boolean} dxfFlag - Indicates if DXF format should be treated differently.
+     		* 
+     		* @returns {Array} - An array of extracted parts.
+     		*/
 		this.importsvg = function(filename, dirpath, svgstring, scalingFactor, dxfFlag){
-			// parse svg
-			// config.scale is the default scale, and may not be applied
-			// scalingFactor is an absolute scaling that must be applied regardless of input svg contents
 			svg = SvgParser.load(dirpath, svgstring, config.scale, scalingFactor);
 			svg = SvgParser.clean(dxfFlag);
 			
@@ -75,24 +94,16 @@
 			}
 
 			return parts;
+		 };
 			
-			// test simplification
-			/*for(i=0; i<parts.length; i++){
-				var part = parts[i];
-				this.renderPolygon(part.polygontree, svg);
-				var simple = this.simplifyPolygon(part.polygontree);
-				this.renderPolygon(simple, svg, 'active');
-				if(part.polygontree.children){
-					for(var j=0; j<part.polygontree.children.length; j++){
-						var schild = this.simplifyPolygon(part.polygontree.children[j], true);
-						//this.renderPolygon(schild, svg, 'active');
-					}
-				}
-				//this.renderPolygon(simple.exterior, svg, 'error');
-			}*/
-		}
-		
-		// debug function
+		/**
+    		* renderPolygon(poly, svg, highlight)
+    		* Utility function to visualize a polygon on the SVG, primarily used for debugging.
+   		* 
+    		* @param {Array} poly - The polygon represented by an array of points.
+    		* @param {Object} svg - The SVG element where the polygon will be rendered.
+     		* @param {string} [highlight] - Optional CSS class for highlighting the polygon.
+    		*/
 		this.renderPolygon = function(poly, svg, highlight){
 			if(!poly || poly.length == 0){
 				return;
@@ -109,7 +120,7 @@
 				polyline.setAttribute('class', highlight);
 			}
 			svg.appendChild(polyline);
-		}
+		};
 		
 		// debug function
 		this.renderPoints = function(points, svg, highlight){
@@ -945,7 +956,7 @@
 		
 		// progressCallback is called when progress is made
 		// displayCallback is called when a new placement has been made
-		this.start = function(p, d){						
+		for = function(p, d){						
 			progressCallback = p;
 			displayCallback = d;
 			
@@ -1342,7 +1353,7 @@
 	
 		this.config = config || { populationSize: 10, mutationRate: 10, rotations: 4 };
 				
-		// population is an array of individuals. Each individual is a object representing the order of insertion and the angle each part is rotated
+		// Initialize the population with random rotations
 		var angles = [];
 		for(var i=0; i<adam.length; i++){
 			var angle = Math.floor(Math.random()*this.config.rotations)*(360/this.config.rotations);
@@ -1350,7 +1361,8 @@
 		}
 		
 		this.population = [{placement: adam, rotation: angles}];
-		
+
+		// Fill the population with mutated versions of the initial population
 		while(this.population.length < config.populationSize){
 			var mutant = this.mutate(this.population[0]);
 			this.population.push(mutant);
