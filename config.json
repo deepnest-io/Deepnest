@@ -1,0 +1,16 @@
+{
+  "input": "./input",
+  "output": null,
+  "timeout": 60000,
+  "sheet": {
+    "width": 3000,
+    "height": 1000
+  },
+  "units": "mm",
+  "spacing": 4,
+  "rotations": 4,
+  "threads": 4,
+  "populationSize": 10,
+  "mutationRate": 10,
+  "placementType": "gravity"
+}

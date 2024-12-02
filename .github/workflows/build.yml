@@ -3,7 +3,7 @@ name: build
 on:
   push:
     # enable next line to limit branches to run
-    branches: [ "master" ]
+    branches: ["master"]
   pull_request:
     # enable next line to limit branches to run
     # branches: [ "master" ]
@@ -14,30 +14,62 @@ jobs:
       matrix:
         node-version: [16.x, 18.x, 20.x]
         os: [windows-2022, ubuntu-22.04]
+        flavor: [test, prod]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-#    not needed currently, but leaving here for future use
-#    - uses: actions/setup-python@v4
-#      with:
-#        python-version: '2.7.18'     
+      #    not needed currently, but leaving here for future use
+      #    - uses: actions/setup-python@v4
+      #      with:
+      #        python-version: '2.7.18'
 
-    - name: boost
-      if: startsWith(matrix.os,'ubuntu')
-      run: sudo apt-get update && sudo apt-get install -yq libboost-dev
-      
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: boost
+        if: startsWith(matrix.os, 'ubuntu')
+        run: sudo apt-get update && sudo apt-get install -yq libboost-dev
 
-    - name: Build
-      run: |
-        npm install
-        npm run build
-    - name: Package
-      run: |    
-        npm run dist
+      - uses: actions/setup-node@v4
+        # with:
+        # node-version: ${{ matrix.node-version }}
+
+      - name: Change entry point
+        if: matrix.flavor == 'test'
+        run: |
+          json=$(node -p "JSON.stringify({...require('./package.json'), main: 'main.test.js' }, null, 2)")
+          echo $json > package.json
+
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Package
+        run: |
+          npx @electron/packager . deepnest --out dist
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.flavor }}-${{ matrix.os }}
+          path: dist/
+          retention-days: 1
+
+      - name: Run app
+        if: matrix.flavor == 'test'
+        run: |
+          appName=$(ls dist | head -1)
+          # copy input files
+          # cp -R ./input ./dist/$appName/resources/app
+          # make executable and run
+          chmod +x ./dist/$appName/deepnest
+          xvfb-run ./dist/$appName/deepnest
+
+      - name: Upload results
+        if: matrix.flavor == 'test'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nesting-results-${{ matrix.os }}
+          path: /home/runner/nesting-*/
+          retention-days: 1
