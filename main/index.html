@@ -6,20 +6,15 @@
 		<link type="text/css" rel="stylesheet" media="all" href="font/latolatinfonts.css" />
 		<link rel="stylesheet" type="text/css" href="style.css" />
 		
-		<script src="util/pathsegpolyfill.js"></script>
-		<script src="util/matrix.js"></script>
+
 		<script src="util/clipper.js"></script>
 		<script src="util/parallel.js"></script>
 		<script src="util/geometryutil.js"></script>
-		<script src="util/placementworker.js"></script>
 		<script src="util/interact.js"></script>
 		<script src="util/ractive.js"></script>
 		<script src="util/svgpanzoom.js"></script>
 		<script src="util/d3-polygon.js"></script>
-		<script src="util/simplify.js"></script>
 		
-		<script src="svgparser.js"></script>
-		<script src="deepnest.js"></script>
 
 		<script>
 		// UI-specific stuff in this script
@@ -39,6 +34,24 @@
 		const axios = require('axios').default;
 		const http = require('http');
 		const path = require('path');
+		const pjson = require('../package.json');
+		const { DeepNest } = require('./deepnest');
+		const SvgParser = require('./svgparser');
+
+		const eventEmitter = new EventTarget();
+		ipcRenderer.on("background-response", (event, payload) => {
+		eventEmitter.dispatchEvent(
+			new CustomEvent("background-response", { detail: payload })
+		)
+		});
+		eventEmitter.addEventListener("background-start", ({ detail: payload }) => {
+			ipcRenderer.send("background-start", payload);
+		});
+		eventEmitter.addEventListener("placement", ({ detail: payload }) => {
+			ipcRenderer.send("placement", payload);
+		});
+
+		const deepNest = window.DeepNest = new DeepNest(eventEmitter);
 		
 		ready(async function(){
 			// main navigation			
@@ -114,7 +127,7 @@
 			}
 			
 			var cfgvalues = config.getSync();
-			window.DeepNest.config(cfgvalues);
+			deepNest.config(cfgvalues);
 			updateForm(cfgvalues);
 			
 			var inputs = document.querySelectorAll('#config input, #config select');
@@ -149,7 +162,7 @@
 					
 					config.setSync(key, val);
 					var cfgvalues = config.getSync();
-					window.DeepNest.config(cfgvalues);
+					deepNest.config(cfgvalues);
 					updateForm(cfgvalues);
 						
 					i.parentNode.className = '';
@@ -170,7 +183,7 @@
 				config.setSync('access_token', tempaccess);
 				config.setSync('id_token', tempid);
 				var cfgvalues = config.getSync();
-				window.DeepNest.config(cfgvalues);
+				deepNest.config(cfgvalues);
 				updateForm(cfgvalues);
 				return false;
 			}
@@ -179,7 +192,7 @@
       function saveJSON() {
           var filePath = remote.getGlobal("NEST_DIRECTORY") + "exports.json";
 
-          var selected = DeepNest.nests.filter(function (n) {
+          var selected = deepNest.nests.filter(function (n) {
             return n.selected;
           });
 
@@ -270,7 +283,6 @@
 			});
 			
 			// version info
-			var pjson = require('../package.json');
 			var version = document.querySelector('#package-version');
 			version.innerText = pjson.version;
 			
@@ -304,8 +316,8 @@
 				//magic: true,
 				template: '#template-part-list',
 				data: {
-					parts: DeepNest.parts,
-					imports: DeepNest.imports,
+					parts: deepNest.parts,
+					imports: deepNest.imports,
 					getSelected: function(){
 						var parts = this.get('parts');
 						return parts.filter(function(p){
@@ -390,13 +402,13 @@
 			});
 			
 			ractive.on('selectall', function(e){
-				var selected = DeepNest.parts.filter(function(p){
+				var selected = deepNest.parts.filter(function(p){
 					return p.selected;
 				}).length;
 				
-				var toggleon = (selected < DeepNest.parts.length);
+				var toggleon = (selected < deepNest.parts.length);
 				
-				DeepNest.parts.forEach(function(p){
+				deepNest.parts.forEach(function(p){
 					if(p.selected != toggleon){
 						togglepart(p);
 					}
@@ -406,25 +418,25 @@
 				ractive.update('parts');
 				ractive.update('imports');
 				
-				if(DeepNest.imports.length > 0){
+				if(deepNest.imports.length > 0){
 					applyzoom();
 				}
 			});
 			
 			// applies svg zoom library to the currently visible import
 			applyzoom = function(){
-				if(DeepNest.imports.length > 0){
-					for(var i=0; i<DeepNest.imports.length; i++){
-						if(DeepNest.imports[i].selected){
-							if(DeepNest.imports[i].zoom){
-								var pan = DeepNest.imports[i].zoom.getPan();
-								var zoom = DeepNest.imports[i].zoom.getZoom();
+				if(deepNest.imports.length > 0){
+					for(var i=0; i<deepNest.imports.length; i++){
+						if(deepNest.imports[i].selected){
+							if(deepNest.imports[i].zoom){
+								var pan = deepNest.imports[i].zoom.getPan();
+								var zoom = deepNest.imports[i].zoom.getZoom();
 							}
 							else{
 								var pan = false;
 								var zoom = false;
 							}
-							DeepNest.imports[i].zoom = svgPanZoom('#import-'+i+' svg', {
+							deepNest.imports[i].zoom = svgPanZoom('#import-'+i+' svg', {
 								  zoomEnabled: true,
 								  controlIconsEnabled: false,
 								  fit: true,
@@ -434,27 +446,27 @@
 							});
 							
 							if(zoom){
-								DeepNest.imports[i].zoom.zoom(zoom);
+								deepNest.imports[i].zoom.zoom(zoom);
 							}
 							if(pan){
-								DeepNest.imports[i].zoom.pan(pan);
+								deepNest.imports[i].zoom.pan(pan);
 							}
 							
 							document.querySelector('#import-'+i+' .zoomin').addEventListener('click', function(ev){
 							  ev.preventDefault();
-							  DeepNest.imports.find(function(e){
+							  deepNest.imports.find(function(e){
 							  	return e.selected;
 							  }).zoom.zoomIn();
 							});
 							document.querySelector('#import-'+i+' .zoomout').addEventListener('click', function(ev){
 							  ev.preventDefault();
-							  DeepNest.imports.find(function(e){
+							  deepNest.imports.find(function(e){
 							  	return e.selected;
 							  }).zoom.zoomOut();
 							});
 							document.querySelector('#import-'+i+' .zoomreset').addEventListener('click', function(ev){
 							  ev.preventDefault();
-							  DeepNest.imports.find(function(e){
+							  deepNest.imports.find(function(e){
 							  	return e.selected;
 							  }).zoom.resetZoom().resetPan();
 							});
@@ -468,7 +480,7 @@
 					return false;
 				}
 				
-				DeepNest.imports.forEach(function(i){
+				deepNest.imports.forEach(function(i){
 					i.selected = false;
 				});
 				
@@ -478,35 +490,35 @@
 			});
 			
 			ractive.on('importdelete', function(e,im){
-				var index = DeepNest.imports.indexOf(im);
-				DeepNest.imports.splice(index,1);
+				var index = deepNest.imports.indexOf(im);
+				deepNest.imports.splice(index,1);
 				
-				if(DeepNest.imports.length > 0){
-					if(!DeepNest.imports[index]){
+				if(deepNest.imports.length > 0){
+					if(!deepNest.imports[index]){
 						index = 0;
 					}
 					
-					DeepNest.imports[index].selected = true;
+					deepNest.imports[index].selected = true;
 				}
 				
 				
 				ractive.update('imports');
 				
-				if(DeepNest.imports.length > 0){
+				if(deepNest.imports.length > 0){
 					applyzoom();
 				}
 			});
 			
 			var deleteparts = function(e){
-				for(var i=0; i<DeepNest.parts.length; i++){
-					if(DeepNest.parts[i].selected){
-						for(var j=0; j<DeepNest.parts[i].svgelements.length; j++){
-							var node = DeepNest.parts[i].svgelements[j];
+				for(var i=0; i<deepNest.parts.length; i++){
+					if(deepNest.parts[i].selected){
+						for(var j=0; j<deepNest.parts[i].svgelements.length; j++){
+							var node = deepNest.parts[i].svgelements[j];
 							if (node.parentNode) {
 							  node.parentNode.removeChild(node);
 							}
 						}
-						DeepNest.parts.splice(i,1);
+						deepNest.parts.splice(i,1);
 						i--;
 					}
 				}
@@ -514,7 +526,7 @@
 				ractive.update('parts');
 				ractive.update('imports');
 				
-				if(DeepNest.imports.length > 0){
+				if(deepNest.imports.length > 0){
 					applyzoom();
 				}
 				
@@ -544,7 +556,7 @@
 							reverse = true;
 						}
 						
-						DeepNest.parts.sort(function(a, b){
+						deepNest.parts.sort(function(a, b){
 							  var av = a[sortfield];
 							  var bv = b[sortfield];
 							  if (av < bv) {
@@ -674,13 +686,13 @@
 			};
 			
 			function importData(data, filename, dirpath, scalingFactor, dxfFlag){
-				window.DeepNest.importsvg(filename, dirpath, data, scalingFactor, dxfFlag);
+				deepNest.importsvg(filename, dirpath, data, scalingFactor, dxfFlag);
 
-				DeepNest.imports.forEach(function(im){
+				deepNest.imports.forEach(function(im){
 					im.selected = false;
 				});
 
-				DeepNest.imports[DeepNest.imports.length-1].selected = true;
+				deepNest.imports[deepNest.imports.length-1].selected = true;
 
 				ractive.update('imports');
 				ractive.update('parts');
@@ -776,7 +788,7 @@
 				rect.setAttribute('height',height.value*conversion);
 				rect.setAttribute('class', 'sheet');
 				svg.appendChild(rect);
-				const sheet = DeepNest.importsvg(null, null, (new XMLSerializer()).serializeToString(svg))[0];
+				const sheet = deepNest.importsvg(null, null, (new XMLSerializer()).serializeToString(svg))[0];
 				sheet.sheet = true;
 				
 				width.className = '';
@@ -861,8 +873,8 @@
 				};
 				
 				
-				var Ac = toClipperCoordinates(DeepNest.parts[0].polygontree);
-				var Bc = toClipperCoordinates(DeepNest.parts[1].polygontree);
+				var Ac = toClipperCoordinates(deepNest.parts[0].polygontree);
+				var Bc = toClipperCoordinates(deepNest.parts[1].polygontree);
 				for(var i=0; i<Bc.length; i++){
 					Bc[i].X *= -1;
 					Bc[i].Y *= -1;
@@ -872,16 +884,16 @@
 				
 				var clipperNfp = toNestCoordinates(solution[0], 10000000);
 				for(i=0; i<clipperNfp.length; i++){
-					clipperNfp[i].x += DeepNest.parts[1].polygontree[0].x;
-					clipperNfp[i].y += DeepNest.parts[1].polygontree[0].y;
+					clipperNfp[i].x += deepNest.parts[1].polygontree[0].x;
+					clipperNfp[i].y += deepNest.parts[1].polygontree[0].y;
 				}
 				//console.log(solution);
 				cpoly = clipperNfp;
 				
-				//cpoly =  .calculateNFP({A: DeepNest.parts[0].polygontree, B: DeepNest.parts[1].polygontree}).pop();
-				gpoly =  GeometryUtil.noFitPolygon(DeepNest.parts[0].polygontree, DeepNest.parts[1].polygontree, false, false).pop();
+				//cpoly =  .calculateNFP({A: deepNest.parts[0].polygontree, B: deepNest.parts[1].polygontree}).pop();
+				gpoly =  GeometryUtil.noFitPolygon(deepNest.parts[0].polygontree, deepNest.parts[1].polygontree, false, false).pop();
 				
-				var svg = DeepNest.imports[0].svg;
+				var svg = deepNest.imports[0].svg;
 				var polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
 				var polyline2 = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
 				
@@ -908,25 +920,25 @@
 				
 				
 				console.log('Nesting start');
-				for(var i=0; i<DeepNest.parts.length; i++){
-					if(DeepNest.parts[i].sheet){
+				for(var i=0; i<deepNest.parts.length; i++){
+					if(deepNest.parts[i].sheet){
 						// need at least one sheet
 						document.querySelector('#main').className = '';
 						document.querySelector('#nest').className = 'active';
 						
 						var displayCallback = function(){
 							// render latest nest if none are selected
-							var selected = this.DeepNest.nests.filter(function(n){
+							var selected = deepNest.nests.filter(function(n){
 								return n.selected;
 							});
 							
 							// only change focus if latest nest is selected
-							if(selected.length == 0 || (this.DeepNest.nests.length > 1 && this.DeepNest.nests[1].selected)){
-								this.DeepNest.nests.forEach(function(n){
+							if(selected.length == 0 || (deepNest.nests.length > 1 && deepNest.nests[1].selected)){
+								deepNest.nests.forEach(function(n){
 									n.selected = false;
 								});
-								displayNest(this.DeepNest.nests[0]);
-								this.DeepNest.nests[0].selected = true;
+								displayNest(deepNest.nests[0]);
+								deepNest.nests[0].selected = true;
 							}
 							
 							this.nest.update('nests');
@@ -938,12 +950,12 @@
 						
 						deleteCache();
 						
-						DeepNest.start(null, displayCallback.bind(window));
+						deepNest.start(null, displayCallback.bind(window));
 						return;
 					}
 				}
 				
-				if(DeepNest.parts.length == 0){
+				if(deepNest.parts.length == 0){
 					message("Please import some parts first");
 				}
 				else{
@@ -957,7 +969,7 @@
 			stop.onclick = function(e){
 				if(stop.className == 'button stop'){
 					ipcRenderer.send('background-stop');
-					DeepNest.stop();
+					deepNest.stop();
 					document.querySelectorAll('li.progress').forEach(function(p){
 						p.removeAttribute('id');
 						p.className = 'progress';
@@ -985,15 +997,15 @@
 			back.onclick = function(e){
 						
 				setTimeout(function(){
-					if(DeepNest.working){
+					if(deepNest.working){
 						ipcRenderer.send('background-stop');
-						DeepNest.stop();
+						deepNest.stop();
 						document.querySelectorAll('li.progress').forEach(function(p){
 							p.removeAttribute('id');
 							p.className = 'progress';
 						});
 					}
-					DeepNest.reset();
+					deepNest.reset();
 					deleteCache();
 					
 					window.nest.update('nests');
@@ -1036,7 +1048,7 @@
 							fileName = fileName + fileExt;
 						}
 
-						var selected = DeepNest.nests.filter(function(n){
+						var selected = deepNest.nests.filter(function(n){
 							return n.selected;
 						});
 						
@@ -1069,7 +1081,7 @@
 							fileName = fileName + fileExt;
 						}
 
-						var selected = DeepNest.nests.filter(function(n){
+						var selected = deepNest.nests.filter(function(n){
 							return n.selected;
 						});
 						
@@ -1115,7 +1127,7 @@
 						console.log("No file selected");
 					}
 					else{
-						var selected = DeepNest.nests.filter(function(n){
+						var selected = deepNest.nests.filter(function(n){
 							return n.selected;
 						});
 						
@@ -1166,14 +1178,14 @@
 				n.placements.forEach(function(s){
 					var group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 					svg.appendChild(group);					
-					/*DeepNest.parts[s.sheet].svgelements.forEach(function(e){
+					/*deepNest.parts[s.sheet].svgelements.forEach(function(e){
 						var node = e.cloneNode(false);
 						node.setAttribute('stroke', '#000');
 						node.setAttribute('fill', 'none');
 						group.appendChild(node);
 					});*/
 					
-					var sheetbounds = DeepNest.parts[s.sheet].bounds;
+					var sheetbounds = deepNest.parts[s.sheet].bounds;
 					
 					group.setAttribute('transform', 'translate('+(-sheetbounds.x)+' '+(svgheight-sheetbounds.y)+')');
 					if(svgwidth < sheetbounds.width){
@@ -1181,7 +1193,7 @@
 					}
 					
 					s.sheetplacements.forEach(function(p){
-						var part = DeepNest.parts[p.source];
+						var part = deepNest.parts[p.source];
 						var partgroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 												
 						part.svgelements.forEach(function(e, index){
@@ -1284,7 +1296,7 @@
 						svg.appendChild(group);
 						groupelement = document.querySelector('#sheet'+s.sheetid);
 						
-						DeepNest.parts[s.sheet].svgelements.forEach(function(e){
+						deepNest.parts[s.sheet].svgelements.forEach(function(e){
 							var node = e.cloneNode(false);
 							node.setAttribute('stroke', '#ffffff');
 							node.setAttribute('fill', 'none');
@@ -1296,7 +1308,7 @@
 					// reset class (make visible)
 					groupelement.setAttribute('class', 'sheet active');
 					
-					var sheetbounds = DeepNest.parts[s.sheet].bounds;
+					var sheetbounds = deepNest.parts[s.sheet].bounds;
 					groupelement.setAttribute('transform', 'translate('+(-sheetbounds.x)+' '+(svgheight-sheetbounds.y)+')');
 					if(svgwidth < sheetbounds.width){
 						svgwidth = sheetbounds.width;
@@ -1305,7 +1317,7 @@
 					s.sheetplacements.forEach(function(p){
 						var partelement = document.querySelector('#part'+p.id);
 						if(!partelement){
-							var part = DeepNest.parts[p.source];
+							var part = deepNest.parts[p.source];
 							var partgroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 							partgroup.setAttribute('id', 'part'+p.id);
 							
@@ -1331,7 +1343,7 @@
 								pattern.setAttribute('id', 'part'+p.source+'hatch');
 								pattern.setAttribute('patternUnits', 'userSpaceOnUse');
 								
-								var psize = parseInt(DeepNest.parts[s.sheet].bounds.width/120);
+								var psize = parseInt(deepNest.parts[s.sheet].bounds.width/120);
 								
 								psize = psize || 10;
 								
@@ -1339,7 +1351,7 @@
 								pattern.setAttribute('height', psize);
 								var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 								path.setAttribute('d', 'M-1,1 l2,-2 M0,'+psize+' l'+psize+',-'+psize+' M'+(psize-1)+','+(psize+1)+' l2,-2');
-								path.setAttribute('style', 'stroke: hsl('+(360*(p.source/DeepNest.parts.length))+', 100%, 80%) !important; stroke-width:1');
+								path.setAttribute('style', 'stroke: hsl('+(360*(p.source/deepNest.parts.length))+', 100%, 80%) !important; stroke-width:1');
 								pattern.appendChild(path);
 								
 								groupelement.appendChild(pattern);
@@ -1394,7 +1406,7 @@
 				//magic: true,
 				template: '#nest-template',
 				data: {
-					nests: DeepNest.nests,
+					nests: deepNest.nests,
 					getSelected: function(){
 						var ne = this.get('nests');
 						return ne.filter(function(n){
@@ -1412,7 +1424,7 @@
 						return p;
 					},
 					getColorBySource: function(id){
-						return 'hsl('+(360*(id/DeepNest.parts.length))+', 100%, 80%)';
+						return 'hsl('+(360*(id/deepNest.parts.length))+', 100%, 80%)';
 					},
 					getPartsPlaced: function(){
 						var ne = this.get('nests');
@@ -1432,9 +1444,9 @@
 						}
 						
 						var total = 0;
-						for(i=0; i<DeepNest.parts.length; i++){
-							if(!DeepNest.parts[i].sheet){
-								total += DeepNest.parts[i].quantity;
+						for(i=0; i<deepNest.parts.length; i++){
+							if(!deepNest.parts[i].sheet){
+								total += deepNest.parts[i].quantity;
 							}
 						}
 						
@@ -1464,8 +1476,8 @@
 			});
 			
 			nest.on('selectnest', function(e, n) {
-				for(var i=0; i<DeepNest.nests.length; i++){
-					DeepNest.nests[i].selected = false;
+				for(var i=0; i<deepNest.nests.length; i++){
+					deepNest.nests[i].selected = false;
 				}
 				n.selected = true;
 				window.nest.update('nests');

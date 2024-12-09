@@ -1,4 +1,3 @@
-# *
-# !/tests/*
-main/
+main/**/*.js
+main/**/*.html
 main.js

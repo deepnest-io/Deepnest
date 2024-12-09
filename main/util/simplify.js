@@ -5,7 +5,7 @@
  modified by Jack Qiao
 */
 
-(function () { 'use strict';
+'use strict';
 
 // to suit your point format, run search/replace for '.x' and '.y';
 // for 3D version, see 3d branch (configurability would draw significant performance overhead)
@@ -121,6 +121,4 @@ function simplify(points, tolerance, highestQuality) {
     return points;
 }
 
-window.simplify = simplify;
-
-})();
+module.exports = {simplify}

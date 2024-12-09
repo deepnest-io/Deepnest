@@ -147,7 +147,7 @@ test("Nest", async ({}, testInfo) => {
   };
 
   // await electronApp.evaluate(({ ipcRenderer }) => {
-  //   ipcRenderer.on("setPlacements", (event, payload) =>
+  //   ipcRenderer.on("placement", (event, payload) =>
   //     console.log("INCOMING", payload)
   //   );
   // });

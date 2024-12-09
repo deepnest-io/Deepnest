@@ -5,7 +5,24 @@
 		<script src="util/clipper.js"></script>
 		<script src="util/d3-polygon.js"></script>
 		<script src="util/parallel.js"></script>
-		<script src="background.js"></script>
+		<script>
+			const { ipcRenderer } = require('electron');
+			const { processNesting } = require('./background');
+			
+			const eventEmitter = new EventTarget();
+			ipcRenderer.on("background-start", (event, payload) => {
+				eventEmitter.dispatchEvent(
+					new CustomEvent("background-start", { detail: payload })
+				)
+			});
+			["background-progress", "background-response", "test"].forEach(eventType => {
+				eventEmitter.addEventListener(eventType, ({ detail: payload }) => {
+					ipcRenderer.send(eventType, payload);
+				});
+			});
+
+			window.addEventListener('load', () => processNesting(eventEmitter));
+		</script>
 	</head>
 	<body>
 	</body>

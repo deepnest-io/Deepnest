@@ -59,8 +59,8 @@ const waitForNesting = async (inputFiles, config) => {
       mergeLines: true, // whether to merge lines
       timeRatio: 0.5, // ratio of material reduction to laser time. 0 = optimize material only, 1 = optimize laser time only
       simplify: false,
-      dxfImportScale: "1",
-      dxfExportScale: "72",
+      dxfImportScale: 1,
+      dxfExportScale: 72,
       endpointTolerance: 0.36,
       conversionServer: "http://convert.deepnest.io",
       ...config,

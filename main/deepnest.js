@@ -3,28 +3,35 @@
  * Licensed under GPLv3
  */
  
-(function(root){
+
 	'use strict';
+
+	const SvgParser = require('./svgparser');
+	const ClipperLib = require('./util/clipper');
+	const {GeometryUtil} = require('./util/geometryutil');
+	const {simplify} = require('./util/simplify')
 	
-	root.DeepNest = new DeepNest(require('electron').ipcRenderer);
-	
-	function DeepNest(eventEmitter){		
-		var svg = null;
+	/**
+	 * 
+	 * @param {EventTarget} eventEmitter 
+	 * @param {Record<string, string|number>} configuration 
+	 */
+	function DeepNest(eventEmitter, configuration = {
+		clipperScale: 10000000,
+		curveTolerance: 0.3, 
+		spacing: 0,
+		rotations: 4,
+		populationSize: 10,
+		mutationRate: 10,
+		threads: 4,
+		placementType: 'gravity',
+		mergeLines: true,
+		timeRatio: 0.5,
+		scale: 72,
+		simplify: false
+	}) {		
 		
-		var config = {
-			clipperScale: 10000000,
-			curveTolerance: 0.3, 
-			spacing: 0,
-			rotations: 4,
-			populationSize: 10,
-			mutationRate: 10,
-			threads: 4,
-			placementType: 'gravity',
-			mergeLines: true,
-			timeRatio: 0.5,
-			scale: 72,
-			simplify: false
-		};
+		var config = {...configuration};
 		
 		// list of imported files
 		// import: {filename: 'blah.svg', svg: svgroot}
@@ -48,14 +55,16 @@
 		var displayCallback = null;
 		// a running list of placements
 		this.nests = [];
+
+		this.eventEmitter = eventEmitter;
 		
 		this.importsvg = function(filename, dirpath, svgstring, scalingFactor, dxfFlag){
 			// parse svg
 			// config.scale is the default scale, and may not be applied
 			// scalingFactor is an absolute scaling that must be applied regardless of input svg contents
-			svg = SvgParser.load(dirpath, svgstring, config.scale, scalingFactor);
+			var svg = SvgParser.load(dirpath, svgstring, config.scale, scalingFactor);
 			svg = SvgParser.clean(dxfFlag);
-			
+
 			if(filename){
 				this.imports.push({
 					filename: filename,
@@ -63,10 +72,8 @@
 				});
 			}
 			
-			var parts = this.getParts(svg.children, filename);
-			for(var i=0; i<parts.length; i++){
-				this.parts.push(parts[i]);
-			}
+			const parts = this.getParts(svg.children, filename);
+			this.parts.push(...parts)
 
 			return parts;
 			
@@ -189,7 +196,7 @@
 				}
 			}
 			
-			var simple = window.simplify(copy, tolerance, true);
+			var simple = simplify(copy, tolerance, true);
 			// now a polygon again
 			simple.pop();
 			
@@ -654,11 +661,13 @@
 				
 				var poly = SvgParser.polygonify(paths[i]);
 				poly = this.cleanPolygon(poly);
-				
+
 				// todo: warn user if poly could not be processed and is excluded from the nest
 				if(poly && poly.length > 2 && Math.abs(GeometryUtil.polygonArea(poly)) > config.curveTolerance*config.curveTolerance){
 					poly.source = i;
 					polygons.push(poly);
+				} else {
+					console.warn('Excluding poly', poly, paths[i])
 				}
 			}
 						
@@ -1004,20 +1013,20 @@
 				}
 			}
 			
-			var self = this;
 			this.working = true;
 			
 			if(!workerTimer){
-				workerTimer = setInterval(function(){
-					self.launchWorkers.call(self, parts, config, progressCallback, displayCallback);
+				workerTimer = setInterval(() => {
+					this.launchWorkers.call(this, parts, config, progressCallback, displayCallback);
 					//progressCallback(progress);
 				}, 100);
 			}
 		}
 		
-		eventEmitter.on('background-response', (event, payload) => {
-		    eventEmitter.send("setPlacements", payload);
-			console.log('ipc response',payload);
+		this.eventEmitter.addEventListener('background-response', ({ detail: payload }) => {
+			const better = this.nests.length == 0 || this.nests[0].fitness > payload.fitness;
+			this.eventEmitter.dispatchEvent(new CustomEvent("placement", { detail: { data: payload, better } }));
+			// console.log('ipc response',payload);
 			if(!GA){
 				// user might have quit while we're away
 				return;
@@ -1026,7 +1035,7 @@
 			GA.population[payload.index].fitness = payload.fitness;
 			
 			// render placement
-			if(this.nests.length == 0 || this.nests[0].fitness > payload.fitness ){
+			if(better){
 				this.nests.unshift(payload);
 				
 				if(this.nests.length > 10){
@@ -1099,7 +1108,7 @@
 			}
 			
 			if(finished){
-				console.log('new generation!');
+				eventEmitter.dispatchEvent(new CustomEvent('new-generation'));
 				// all individuals have been evaluated, start next generation
 				GA.generation();
 			}
@@ -1151,8 +1160,24 @@
 						children[j] = child;
             filenames[j] = filename;
 					}
-					
-					eventEmitter.send('background-start', {index: i, sheets: sheets, sheetids: sheetids, sheetsources: sheetsources, sheetchildren: sheetchildren, individual: GA.population[i], config: config, ids: ids, sources: sources, children: children, filenames: filenames});
+
+					this.eventEmitter.dispatchEvent(
+						new CustomEvent("background-start", {
+						  detail: {
+							index: i,
+							sheets,
+							sheetids,
+							sheetsources,
+							sheetchildren,
+							individual: GA.population[i],
+							config,
+							ids,
+							sources,
+							children,
+							filenames,
+						  },
+						})
+					  );
 					running++;					
 				}
 			}
@@ -1244,71 +1269,6 @@
 			return normal;
 		}
 		
-		// returns an array of SVG elements that represent the placement, for export or rendering
-		this.applyPlacement = function(placement){
-			var i, j, k;
-			var clone = [];
-			for(i=0; i<parts.length; i++){
-				clone.push(parts[i].cloneNode(false));
-			}
-			
-			var svglist = [];
-
-			for(i=0; i<placement.length; i++){
-				var newsvg = svg.cloneNode(false);
-				newsvg.setAttribute('viewBox', '0 0 '+binBounds.width+' '+binBounds.height);
-				newsvg.setAttribute('width',binBounds.width + 'px');
-				newsvg.setAttribute('height',binBounds.height + 'px');
-				var binclone = bin.cloneNode(false);
-				
-				binclone.setAttribute('class','bin');
-				binclone.setAttribute('transform','translate('+(-binBounds.x)+' '+(-binBounds.y)+')');
-				newsvg.appendChild(binclone);
-
-				for(j=0; j<placement[i].length; j++){
-					var p = placement[i][j];
-					var part = tree[p.id];
-					
-					// the original path could have transforms and stuff on it, so apply our transforms on a group
-					var partgroup = document.createElementNS(svg.namespaceURI, 'g');
-					partgroup.setAttribute('transform','translate('+p.x+' '+p.y+') rotate('+p.rotation+')');
-					partgroup.appendChild(clone[part.source]);
-					
-					if(part.children && part.children.length > 0){
-						var flattened = _flattenTree(part.children, true);
-						for(k=0; k<flattened.length; k++){
-							
-							var c = clone[flattened[k].source];
-							if(flattened[k].hole){
-								c.setAttribute('class','hole');
-							}
-							partgroup.appendChild(c);
-						}
-					}
-					
-					newsvg.appendChild(partgroup);
-				}
-				
-				svglist.push(newsvg);
-			}
-			
-			// flatten the given tree into a list
-			function _flattenTree(t, hole){
-				var flat = [];
-				for(var i=0; i<t.length; i++){
-					flat.push(t[i]);
-					t[i].hole = hole;
-					if(t[i].children && t[i].children.length > 0){
-						flat = flat.concat(_flattenTree(t[i].children, !hole));
-					}
-				}
-				
-				return flat;
-			}
-			
-			return svglist;
-		}
-		
 		this.stop = function(){
 			this.working = false;
 			if(GA && GA.population && GA.population.length > 0){
@@ -1320,6 +1280,7 @@
 				clearInterval(workerTimer);
 				workerTimer = null;
 			}
+			eventEmitter.dispatchEvent(new CustomEvent('stopped'));
 		};
 		
 		this.reset = function(){
@@ -1468,4 +1429,6 @@
 		return pop[0];
 	}
 	
-})(this);
+module.exports = {
+	DeepNest
+}

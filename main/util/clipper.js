@@ -76,25 +76,25 @@
 
   var ClipperLib = {};
   var isNode = false;
-  /*if (typeof module !== 'undefined' && module.exports)
+  if (typeof module !== 'undefined' && module.exports)
   {
     module.exports = ClipperLib;
     isNode = true;
   }
   else
-  {*/
+  {
     if (typeof (document) !== "undefined") window.ClipperLib = ClipperLib;
     else self['ClipperLib'] = ClipperLib;
-  //}
-  var navigator_appName;
+  }
+  var navigator_appName, nav;
   if (!isNode)
   {
-    var nav = navigator.userAgent.toString().toLowerCase();
+    nav = navigator.userAgent.toString().toLowerCase();
     navigator_appName = navigator.appName;
   }
   else
   {
-    var nav = "chrome"; // Node.js uses Chrome's V8 engine
+    nav = "chrome"; // Node.js uses Chrome's V8 engine
     navigator_appName = "Netscape"; // Firefox, Chrome and Safari returns "Netscape", so Node.js should also
   }
   // Browser test to speedup performance critical functions
