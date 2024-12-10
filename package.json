@@ -30,14 +30,15 @@
     "@electron/packager": "^18.3.6",
     "@electron/rebuild": "^3.2.9",
     "@types/node": "^22.10.1",
-    "electron": "^19.1.9",
+    "electron": "33.2.1",
     "nan": "^2.22.0",
+    "patch-package": "^8.0.0",
     "shx": "^0.3.4"
   },
   "dependencies": {
     "@electron/remote": "^2.1.2",
     "graceful-fs": "^4.2.11",
-    "request": "^2.88.2"
+    "axios": "^1.7.7"
   },
   "build": {
     "appId": "com.deepnest.io",

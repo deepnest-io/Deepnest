@@ -1,0 +1,54 @@
+diff --git a/dist/settings.js b/dist/settings.js
+index 8addf411e30098750c9ef2fc45285410f5def066..d5e645cb6a454809d4f50fbe9edce2e91e18c9d5 100644
+--- a/dist/settings.js
++++ b/dist/settings.js
+@@ -1,6 +1,6 @@
+ "use strict";
+ var __assign = (this && this.__assign) || function () {
+-    __assign = Object.assign || function(t) {
++    __assign = Object.assign || function (t) {
+         for (var s, i = 1, n = arguments.length; i < n; i++) {
+             s = arguments[i];
+             for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+@@ -20,8 +20,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
+     });
+ };
+ var __generator = (this && this.__generator) || function (thisArg, body) {
+-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
++    var _ = { label: 0, sent: function () { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
++    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function () { return this; }), g;
+     function verb(n) { return function (v) { return step([n, v]); }; }
+     function step(op) {
+         if (f) throw new TypeError("Generator is already executing.");
+@@ -49,7 +49,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
+ var __importDefault = (this && this.__importDefault) || function (mod) {
+     return (mod && mod.__esModule) ? mod : { "default": mod };
+ };
+-var electron_1 = __importDefault(require("electron"));
++var electron_1 = __importDefault(require('@electron/remote'));
+ var fs_1 = __importDefault(require("fs"));
+ var mkdirp_1 = __importDefault(require("mkdirp"));
+ var path_1 = __importDefault(require("path"));
+@@ -73,7 +73,7 @@ var config = __assign({}, defaultConfig);
+  */
+ function getElectron() {
+     var _a;
+-    return (_a = config.electron) !== null && _a !== void 0 ? _a : electron_1.default;
++    return (_a = config.electron) !== null && _a !== void 0 ? _a : (electron_1.default ? electron_1.default : electron_1);
+ }
+ /**
+  * Returns the Electron app. The app may need be accessed
+@@ -542,9 +542,9 @@ function unset(keyPath) {
+                     obj = _a.sent();
+                     (0, lodash_1.unset)(obj, keyPath);
+                     return [2 /*return*/, saveSettings(obj)];
+-                case 2: 
+-                // Unset all settings by saving empty object.
+-                return [2 /*return*/, saveSettings({})];
++                case 2:
++                    // Unset all settings by saving empty object.
++                    return [2 /*return*/, saveSettings({})];
+             }
+         });
+     });
