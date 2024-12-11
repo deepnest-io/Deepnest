@@ -35,6 +35,7 @@
 		const { ipcRenderer } = require('electron');
 		const remote = require('@electron/remote');
 		const { dialog } = remote;
+		const { loadSvgString } = require('@deepnest/svg-preprocessor');
 		const fs = require('graceful-fs');
 		const axios = require('axios').default;
 		const http = require('http');
@@ -652,7 +653,12 @@
 
 							// dirpath is used for loading images embedded in svg files
 							// converted svgs will not have images
-							importData(body, filename, null, con, dxfFlag);
+							const svgResult=loadSvgString(body);
+							if (!svgResult.success) {
+								message(svgResult.result, true);
+							} else {
+								importData(svgResult.result, filename, null, con, dxfFlag);
+							}
 						}
 					}).catch(err => {
 						message('could not contact file conversion server', true);
@@ -662,14 +668,18 @@
 
 			function readFile(filepath){
 				fs.readFile(filepath, 'utf-8', function (err, data) {
-					  if(err){
-						  message("An error ocurred reading the file :" + err.message, true);
-						  return;
-					  }
-					  var filename = path.basename(filepath);
-					  var dirpath = path.dirname(filepath);
-					  
-					  importData(data, filename, dirpath, null);
+					if(err){
+						message("An error ocurred reading the file :" + err.message, true);
+						return;
+					}
+					var filename = path.basename(filepath);
+					var dirpath = path.dirname(filepath);
+					const svgResult=loadSvgString(data);
+					if (!svgResult.success) {
+						message(svgResult.result, true);
+					} else {
+						importData(svgResult.result, filename, dirpath, null);
+					}
 				});
 			};
 			
