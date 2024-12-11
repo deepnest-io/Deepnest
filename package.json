@@ -37,7 +37,7 @@
   "dependencies": {
     "@electron/remote": "^2.1.2",
     "graceful-fs": "^4.2.11",
-    "request": "^2.88.2"
+    "axios": "^1.7.9"
   },
   "build": {
     "appId": "com.deepnest.io",
