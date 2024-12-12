@@ -173,7 +173,7 @@ function createBackgroundWindows() {
 app.on('ready', () => {
 	createMainWindow();
 	mainWindow.once('ready-to-show', () => {
-	  mainWindow.show();
+	  !process.env.CI && mainWindow.show();
 	  createBackgroundWindows();
 	})
 	mainWindow.on('closed', () => {
