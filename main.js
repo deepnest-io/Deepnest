@@ -73,7 +73,7 @@ if (!gotTheLock) {
       mainWindow.focus()
     }
   })
-
+	
   // Create myWindow, load the rest of the app, etc...
   app.whenReady().then(() => {
     //myWindow = createWindow()
@@ -100,7 +100,7 @@ function createMainWindow() {
     }
   })
 
-  // and load the index.html of the app. 
+  // and load the index.html of the app.
   mainWindow.loadURL(url.format({
     pathname: path.join(__dirname, './main/index.html'),
     protocol: 'file:',
@@ -120,27 +120,25 @@ function createMainWindow() {
     // when you should delete the corresponding element.
     mainWindow = null
   }) 
-
+	
   if (process.env.SAVE_PLACEMENTS_PATH !== undefined) {
     global.NEST_DIRECTORY = process.env.SAVE_PLACEMENTS_PATH;
   } else {
     global.NEST_DIRECTORY = path.join(os.tmpdir(), "nest");
   }
-  // make sure the export directory exists
-  // HUSNA: Ensure the export directory exists, and handle any errors that may occur during directory creation.
-try {
-  if (!fs.existsSync(global.NEST_DIRECTORY)) {
-    fs.mkdirSync(global.NEST_DIRECTORY, { recursive: true }); // Safely create the directory if it doesn't exist
-    console.log(Directory created: ${global.NEST_DIRECTORY});
-  } else {
-    console.log(Directory already exists: ${global.NEST_DIRECTORY});
+  // (HUSNA) make sure the export directory exists and handle any errors that may occur
+if (!fs.existsSync(global.NEST_DIRECTORY)) {
+  try {
+    fs.mkdirSync(global.NEST_DIRECTORY, { recursive: true });
+    console.log(`Directory created: ${global.NEST_DIRECTORY}`);
+  } catch (error) {
+    console.error(`Error creating directory: ${error.message}`);
   }
-} catch (err) {
-  console.error(Error while creating directory ${global.NEST_DIRECTORY}:, err);
+}
+
 }
 
 let winCount = 0;
-
 function createBackgroundWindows() {
 	//busyWindows = [];
 	// used to have 8, now just 1 background window
@@ -172,7 +170,6 @@ function createBackgroundWindows() {
 		});
 	}
 }
-
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -188,12 +185,10 @@ app.on('ready', () => {
 	  app.quit();
 	});
 })
-
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
   app.quit()
 })
-
 app.on('activate', function () {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
@@ -201,7 +196,6 @@ app.on('activate', function () {
     createMainWindow()
   }
 })
-
 app.on('before-quit', function(){
 	var p = path.join(__dirname, './nfpcache')
 	  if( fs.existsSync(p) ) {
@@ -211,48 +205,37 @@ app.on('before-quit', function(){
 		});
 	}
 });
-
 //ipcMain.on('background-response', (event, payload) => mainWindow.webContents.send('background-response', payload));
 //ipcMain.on('background-start', (event, payload) => backgroundWindows[0].webContents.send('background-start', payload));
 
 ipcMain.on('background-start', function(event, payload){
-  console.log('Starting background!');
-  let windowFound = false;
-  for(var i=0; i<backgroundWindows.length; i++){
-    if(backgroundWindows[i] && !backgroundWindows[i].isBusy){
-      backgroundWindows[i].isBusy = true;
-      backgroundWindows[i].webContents.send('background-start', payload);
-      windowFound = true;
-      break;
-    }
-  }
-  
-  if (!windowFound) {
-    console.warn('No available background window found to start the operation.');
-  }
+	console.log('starting background!');
+	for(var i=0; i<backgroundWindows.length; i++){
+		if(backgroundWindows[i] && !backgroundWindows[i].isBusy){
+			backgroundWindows[i].isBusy = true;
+			backgroundWindows[i].webContents.send('background-start', payload);
+			break;
+		}
+	}
 });
 
-
 ipcMain.on('background-response', function(event, payload){
-  for(var i=0; i<backgroundWindows.length; i++){
+	for(var i=0; i<backgroundWindows.length; i++){
+    // todo: hack to fix errors on app closing - should instead close workers when window is closed
     try {
-      if (backgroundWindows[i]) {
-        if (backgroundWindows[i].webContents === event.sender) {
-          mainWindow.webContents.send('background-response', payload);
-          backgroundWindows[i].isBusy = false;
-          break;
-        }
-      } else {
-        console.warn(Background window at index ${i} is null or destroyed.);
-      }
+		  if(backgroundWindows[i].webContents == event.sender){
+		  	mainWindow.webContents.send('background-response', payload);
+		   	backgroundWindows[i].isBusy = false;
+		  	break;
+		  }
     } catch (ex) {
-      console.error(Error in background-response handling for window at index ${i}:, ex);
-      // Log and handle errors when referencing destroyed windows (e.g., window closed unexpectedly)
+      // ignore errors, as they can reference destroyed objects during a window close event
     }
-  }
+	}
 });
 
 ipcMain.on('background-progress', function(event, payload){
+
     // todo: hack to fix errors on app closing - should instead close workers when window is closed
     try {
 	  mainWindow.webContents.send('background-progress', payload);
@@ -260,7 +243,6 @@ ipcMain.on('background-progress', function(event, payload){
     // when shutting down while processes are running, this error can occur so ignore it for now.
   }
 });
-
 ipcMain.on('background-stop', function(event){
 	for(var i=0; i<backgroundWindows.length; i++){
 		if(backgroundWindows[i]){
@@ -274,15 +256,12 @@ ipcMain.on('background-stop', function(event){
 	
 	console.log('stopped!', backgroundWindows);
 });
-
 ipcMain.on('login-success', function(event, payload){
 	mainWindow.webContents.send('login-success', payload);
 });
-
 ipcMain.on('purchase-success', function(event){
 	mainWindow.webContents.send('purchase-success');
 });
-
 ipcMain.on("setPlacements", (event, payload) => {
   global.exportedPlacements = payload;
 } );
