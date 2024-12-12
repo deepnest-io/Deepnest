@@ -8,33 +8,11 @@ import { OpenDialogReturnValue } from "electron";
 import { readdir, readFile } from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
+import { DeepNestConfig, NestingResult } from "../index";
 
-type NestingResult = {
-  area: number;
-  fitness: number;
-  index: number;
-  mergedLength: number;
-  selected: boolean;
-  placements: {
-    sheet: number;
-    sheetid: number;
-    sheetplacements: {
-      filename: string;
-      id: number;
-      rotation: number;
-      source: number;
-      x: number;
-      y: number;
-    }[];
-  }[];
-};
+// !process.env.CI && test.use({ launchOptions: { slowMo: !process.env.CI ? 500 : 0 } });
 
-// test.use({ launchOptions: { slowMo: !process.env.CI ? 500 : 0 } });
-
-// test.setTimeout(5 * 60_000);
-// !process.env.CI && test.use({ launchOptions: { slowMo: 2000 } });
-
-const sheet = { width: 3000, height: 1000 };
+const sheet = { width: 300, height: 200 };
 
 test("Nest", async ({}, testInfo) => {
   const electronApp = await electron.launch({
@@ -44,44 +22,24 @@ test("Nest", async ({}, testInfo) => {
 
   const window = await electronApp.firstWindow();
 
-  // Direct Electron console to Node terminal.
-  const logMessage = async (message: ConsoleMessage) => {
-    const { url, lineNumber, columnNumber } = message.location();
-    let file = url;
-    try {
-      file = path.relative(process.cwd(), fileURLToPath(url));
-    } catch (error) {}
-    console.log({
-      location: `${file}:${lineNumber}:${columnNumber}`,
-      args: await Promise.all(message.args().map((x) => x.jsonValue())),
-      type: message.type(),
-    });
-  };
+  // // Pipe Electron console to Node terminal.
+  // const logMessage = async (message: ConsoleMessage) => {
+  //   const { url, lineNumber, columnNumber } = message.location();
+  //   let file = url;
+  //   try {
+  //     file = path.relative(process.cwd(), fileURLToPath(url));
+  //   } catch (error) {}
+  //   console.log({
+  //     location: `${file}:${lineNumber}:${columnNumber}`,
+  //     args: await Promise.all(message.args().map((x) => x.jsonValue())),
+  //     type: message.type(),
+  //   });
+  // };
   // window.on("console", logMessage);
   // electronApp.on("window", (win) => win.on("console", logMessage));
 
   await test.step("upload and start", async () => {
-    // electronApp.evaluate(
-    //   (q, { upload, download }) => {
-    //     console.log(q);
-    //     q.contextBridge.exposeInMainWorld("electron", {
-    //       showOpenDialog: async (): Promise<OpenDialogReturnValue> => ({
-    //         filePaths: upload,
-    //         canceled: false,
-    //       }),
-    //       showSaveDialogSync: () => download,
-    //     });
-    //   },
-    //   {
-    //     upload: [
-    //       path.resolve(process.cwd(), "input", "letters.svg"),
-    //       path.resolve(process.cwd(), "input", "letters2.svg"),
-    //     ],
-    //     download: downloadPath,
-    //   }
-    // );
-
-    const inputDir = path.resolve(process.cwd(), "input");
+    const inputDir = path.resolve(__dirname, "assets");
     const files = (await readdir(inputDir))
       .filter((file) => path.extname(file) === ".svg")
       .map((file) => path.resolve(inputDir, file));
@@ -101,7 +59,7 @@ test("Nest", async ({}, testInfo) => {
 
     const spacingMM = 10;
     const scale = 72;
-    const config = {
+    const config: DeepNestConfig = {
       units: "mm",
       scale, // stored value will be in units/inch
       spacing: (spacingMM / 25.4) * scale, // stored value will be in units/inch
@@ -115,8 +73,8 @@ test("Nest", async ({}, testInfo) => {
       mergeLines: true, // whether to merge lines
       timeRatio: 0.5, // ratio of material reduction to laser time. 0 = optimize material only, 1 = optimize laser time only
       simplify: false,
-      dxfImportScale: "1",
-      dxfExportScale: "72",
+      dxfImportScale: 1,
+      dxfExportScale: 72,
       endpointTolerance: 0.36,
       conversionServer: "http://convert.deepnest.io",
     };
@@ -146,40 +104,24 @@ test("Nest", async ({}, testInfo) => {
     return (await readFile(file)).toString();
   };
 
-  // await electronApp.evaluate(({ ipcRenderer }) => {
-  //   ipcRenderer.on("placement", (event, payload) =>
-  //     console.log("INCOMING", payload)
-  //   );
-  // });
+  const waitForIteration = (n: number) =>
+    expect(() =>
+      expect(
+        window
+          .locator("id=nestlist")
+          .locator("span")
+          .nth(n - 1)
+      ).toBeVisible()
+    ).toPass();
 
-  // const waitForIteration = (n: number) =>
-  //   expect(() =>
-  //     expect(
-  //       window
-  //         .locator("id=nestlist")
-  //         .locator("span")
-  //         .nth(n - 1)
-  //     ).toBeVisible()
-  //   ).toPass();
-
-  // await window.pause();
-
-  // await expect(window.locator("id=progressbar")).toBeVisible();
-  const n = 1;
-  await expect(() =>
-    expect(
-      window
-        .locator("id=nestlist")
-        .locator("span")
-        .nth(n - 1)
-    ).toBeVisible()
-  ).toPass();
+  await expect(window.locator("id=progressbar")).toBeVisible();
+  await waitForIteration(1);
   await expect(window.locator("id=nestinfo").locator("h1").nth(0)).toHaveText(
     "1"
   );
-  // await expect(window.locator("id=nestinfo").locator("h1").nth(1)).toHaveText(
-  //   "54/54"
-  // );
+  await expect(window.locator("id=nestinfo").locator("h1").nth(1)).toHaveText(
+    "54/54"
+  );
 
   const svg = await downloadSvg();
 

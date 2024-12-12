@@ -3,6 +3,7 @@
   "version": "1.2.1",
   "description": "Deep nesting for Laser and CNC",
   "main": "main.js",
+  "types": "index.d.ts",
   "license": "MIT",
   "gypfile": true,
   "bin": "cli.mjs",
