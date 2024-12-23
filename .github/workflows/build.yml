@@ -7,6 +7,7 @@ on:
   pull_request:
     # enable next line to limit branches to run
     # branches: [ "master" ]
+  workflow_dispatch:
 
 jobs:
   build:
